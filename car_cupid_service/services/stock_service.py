@@ -16,7 +16,13 @@ from frappe.utils import add_days, cint, flt, now_datetime, nowdate
 from car_cupid_service.services.settings import get_company_row, get_settings, material_flow_enabled
 
 STORE_ROLES = {"Storekeeper", "Billing Supervisor", "System Manager", "Stock Manager"}
-REQUEST_ROLES = {"Service Engineer", "Service Advisor", "Counter Salesperson", "Billing Supervisor", "System Manager"}
+REQUEST_ROLES = {
+	"Service Engineer",
+	"Service Advisor",
+	"Counter Salesperson",
+	"Billing Supervisor",
+	"System Manager",
+}
 
 
 def _check_roles(allowed: set, action: str):
@@ -50,7 +56,9 @@ def request_materials(job_card: str, rows: list[str] | None = None, silent: bool
 			continue
 		company_row = get_company_row(row.company)
 		if not company_row.service_bay_warehouse:
-			frappe.throw(_("Set a Service Bay (WIP) Warehouse for {0} in Car Cupid Settings").format(row.company))
+			frappe.throw(
+				_("Set a Service Bay (WIP) Warehouse for {0} in Car Cupid Settings").format(row.company)
+			)
 		source = row.warehouse or company_row.default_warehouse
 		groups.setdefault((row.company, source, company_row.service_bay_warehouse), []).append((row, need))
 
@@ -116,7 +124,9 @@ def request_materials(job_card: str, rows: list[str] | None = None, silent: bool
 	refresh_source("Service Job Card", jc.name)
 	if not silent:
 		frappe.msgprint(
-			_("{0} material request line(s) sent to stores.").format(len(created)), indicator="green", alert=True
+			_("{0} material request line(s) sent to stores.").format(len(created)),
+			indicator="green",
+			alert=True,
 		)
 	return created
 
@@ -158,7 +168,9 @@ def _line_billed_and_net(mir) -> tuple[float, float]:
 	return flt(billed), flt(issued) - flt(returned)
 
 
-def record_issue(mir_name: str, qty: float, received_by: str | None = None, remarks: str | None = None) -> dict:
+def record_issue(
+	mir_name: str, qty: float, received_by: str | None = None, remarks: str | None = None
+) -> dict:
 	_check_roles(STORE_ROLES, _("issue material from stores"))
 	frappe.db.get_value("Material Issue Request", mir_name, "name", for_update=True)
 	mir = frappe.get_doc("Material Issue Request", mir_name)
@@ -169,10 +181,16 @@ def record_issue(mir_name: str, qty: float, received_by: str | None = None, rema
 		frappe.throw(_("Issue quantity must be greater than zero"))
 	if qty > flt(mir.pending_qty) + 1e-9:
 		frappe.throw(
-			_("Only {0} {1} is pending on this request; you tried to issue {2}.").format(mir.pending_qty, mir.uom, qty),
+			_("Only {0} {1} is pending on this request; you tried to issue {2}.").format(
+				mir.pending_qty, mir.uom, qty
+			),
 			title=_("Over-issue Blocked"),
 		)
-	available = flt(frappe.db.get_value("Bin", {"item_code": mir.item_code, "warehouse": mir.source_warehouse}, "actual_qty"))
+	available = flt(
+		frappe.db.get_value(
+			"Bin", {"item_code": mir.item_code, "warehouse": mir.source_warehouse}, "actual_qty"
+		)
+	)
 	if available < qty:
 		frappe.throw(
 			_("Only {0} in stock at {1}. Cannot issue {2}.").format(available, mir.source_warehouse, qty),
@@ -207,7 +225,9 @@ def record_return(mir_name: str, qty: float, remarks: str | None = None) -> dict
 	returnable = min(flt(mir.issued_qty) - flt(mir.returned_qty), line_net - billed)
 	if qty > returnable + 1e-9:
 		frappe.throw(
-			_("At most {0} can be returned (issued, not yet returned and not yet invoiced).").format(max(returnable, 0)),
+			_("At most {0} can be returned (issued, not yet returned and not yet invoiced).").format(
+				max(returnable, 0)
+			),
 			title=_("Return Blocked"),
 		)
 	se = _make_transfer(mir, qty, mir.target_warehouse, mir.source_warehouse, is_issue=False)
@@ -240,7 +260,11 @@ def cancel_request(mir_name: str) -> str:
 	if mir.material_request:
 		open_mirs = frappe.db.count(
 			"Material Issue Request",
-			{"material_request": mir.material_request, "status": ("not in", ["Cancelled"]), "name": ("!=", mir.name)},
+			{
+				"material_request": mir.material_request,
+				"status": ("not in", ["Cancelled"]),
+				"name": ("!=", mir.name),
+			},
 		)
 		if not open_mirs:
 			try:

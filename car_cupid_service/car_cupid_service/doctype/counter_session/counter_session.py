@@ -35,15 +35,16 @@ class CounterSession(Document):
 			if not self.variance_reason:
 				frappe.throw(
 					_("Cash variance of {0} is above the tolerance of {1}. Enter a reason.").format(
-						frappe.format_value(self.variance, "Currency"), frappe.format_value(tolerance, "Currency")
+						frappe.format_value(self.variance, "Currency"),
+						frappe.format_value(tolerance, "Currency"),
 					),
 					title=_("Variance Needs Explanation"),
 				)
 			if not cint(self.variance_approved):
 				frappe.throw(
-					_("Cash variance of {0} needs approval from a Billing Supervisor or Accounts Manager before closing.").format(
-						frappe.format_value(self.variance, "Currency")
-					),
+					_(
+						"Cash variance of {0} needs approval from a Billing Supervisor or Accounts Manager before closing."
+					).format(frappe.format_value(self.variance, "Currency")),
 					title=_("Approval Required"),
 				)
 
@@ -64,7 +65,9 @@ class CounterSession(Document):
 		)
 		if other:
 			frappe.throw(
-				_("Cashier {0} already has an open counter session {1}. Close it first.").format(self.cashier, other),
+				_("Cashier {0} already has an open counter session {1}. Close it first.").format(
+					self.cashier, other
+				),
 				title=_("Session Already Open"),
 			)
 
@@ -83,8 +86,14 @@ class CounterSession(Document):
 			old = {m.name: m for m in before.movements}
 			for m in self.movements:
 				prev = old.get(m.name)
-				if prev and (flt(prev.amount) != flt(m.amount) or prev.movement_type != m.movement_type) and not supervisor:
-					frappe.throw(_("Row {0}: only a supervisor can edit a recorded cash movement").format(m.idx))
+				if (
+					prev
+					and (flt(prev.amount) != flt(m.amount) or prev.movement_type != m.movement_type)
+					and not supervisor
+				):
+					frappe.throw(
+						_("Row {0}: only a supervisor can edit a recorded cash movement").format(m.idx)
+					)
 			removed = set(old) - {m.name for m in self.movements}
 			if removed and not supervisor:
 				frappe.throw(_("Only a supervisor can delete a recorded cash movement"))
@@ -112,7 +121,12 @@ class CounterSession(Document):
 			is_cash = 1 if cash_mode_types.get(r.mode_of_payment) == "Cash" else 0
 			self.append(
 				"mode_summary",
-				{"mode_of_payment": r.mode_of_payment, "is_cash": is_cash, "transactions": r.transactions, "amount": r.amount},
+				{
+					"mode_of_payment": r.mode_of_payment,
+					"is_cash": is_cash,
+					"transactions": r.transactions,
+					"amount": r.amount,
+				},
 			)
 			if is_cash:
 				cash += flt(r.amount)

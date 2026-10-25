@@ -20,11 +20,23 @@ def payload(doc) -> dict:
 	d["material_requests"] = frappe.get_all(
 		"Material Issue Request",
 		filters={"job_card": doc.name},
-		fields=["name", "job_card_item", "item_code", "item_name", "requested_qty", "issued_qty", "returned_qty", "pending_qty", "status"],
+		fields=[
+			"name",
+			"job_card_item",
+			"item_code",
+			"item_name",
+			"requested_qty",
+			"issued_qty",
+			"returned_qty",
+			"pending_qty",
+			"status",
+		],
 		order_by="creation asc",
 	)
 	d["ready_for_billing"] = doc.status in ("Ready for Billing", "Partially Billed")
-	d["estimated_incentive"] = sum(estimate_for_line(r, r.company) for r in doc.items if r.work_status != "Cancelled")
+	d["estimated_incentive"] = sum(
+		estimate_for_line(r, r.company) for r in doc.items if r.work_status != "Cancelled"
+	)
 	return d
 
 
@@ -43,7 +55,12 @@ def list_jobs(status: str | None = None, txt: str | None = None, limit: int = 50
 	or_filters = None
 	if txt:
 		like = f"%{txt}%"
-		or_filters = [["vehicle_number", "like", like], ["customer_name", "like", like], ["mobile_no", "like", like], ["name", "like", like]]
+		or_filters = [
+			["vehicle_number", "like", like],
+			["customer_name", "like", like],
+			["mobile_no", "like", like],
+			["name", "like", like],
+		]
 	return frappe.get_list(
 		"Service Job Card",
 		filters=filters,
@@ -169,9 +186,15 @@ def remove_line(job_card: str, row: str) -> dict:
 	target = next((r for r in doc.items if r.name == row), None)
 	if not target:
 		frappe.throw(_("Line not found; refresh the job card"))
-	if flt(target.billed_qty) or flt(target.issued_qty) - flt(target.returned_qty) > 0 or flt(target.requested_qty):
+	if (
+		flt(target.billed_qty)
+		or flt(target.issued_qty) - flt(target.returned_qty) > 0
+		or flt(target.requested_qty)
+	):
 		frappe.throw(
-			_("This line has material requested/issued or is billed. Mark it Cancelled instead of deleting it."),
+			_(
+				"This line has material requested/issued or is billed. Mark it Cancelled instead of deleting it."
+			),
 			title=_("Cannot Remove"),
 		)
 	doc.remove(target)

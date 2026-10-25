@@ -1,0 +1,21 @@
+{
+ "creation": "2026-10-25 12:00:00.000000",
+ "docstatus": 0,
+ "doctype": "Number Card",
+ "document_type": "Service Job Card",
+ "dynamic_filters_json": "[]",
+ "filters_json": "[[\"Service Job Card\", \"status\", \"in\", [\"Open\", \"Work In Progress\"], false]]",
+ "function": "Count",
+ "idx": 0,
+ "is_public": 1,
+ "is_standard": 1,
+ "label": "Open Job Cards",
+ "modified": "2026-10-25 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Car Cupid Service",
+ "name": "Open Job Cards",
+ "owner": "Administrator",
+ "show_percentage_stats": 0,
+ "stats_time_interval": "Daily",
+ "type": "Document Type"
+}

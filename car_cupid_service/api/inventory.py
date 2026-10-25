@@ -7,7 +7,9 @@ from car_cupid_service.services import stock_service
 
 
 @frappe.whitelist()
-def pending_requests(company: str | None = None, warehouse: str | None = None, include_issued: int = 0) -> list[dict]:
+def pending_requests(
+	company: str | None = None, warehouse: str | None = None, include_issued: int = 0
+) -> list[dict]:
 	frappe.has_permission("Material Issue Request", "read", throw=True)
 	statuses = ["Requested", "Partially Issued"]
 	if cint(include_issued):
@@ -44,7 +46,9 @@ def pending_requests(company: str | None = None, warehouse: str | None = None, i
 	)
 	for r in rows:
 		r["in_stock"] = flt(
-			frappe.db.get_value("Bin", {"item_code": r.item_code, "warehouse": r.source_warehouse}, "actual_qty")
+			frappe.db.get_value(
+				"Bin", {"item_code": r.item_code, "warehouse": r.source_warehouse}, "actual_qty"
+			)
 		)
 	return rows
 

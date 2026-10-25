@@ -27,19 +27,38 @@ class CarCupidSettings(Document):
 						)
 					)
 			if row.default_warehouse and row.default_warehouse == row.service_bay_warehouse:
-				errors.append(_("Row {0}: Store and Service Bay warehouses must be different").format(row.idx))
-			if self.material_issue_policy != "Not Required" and not row.service_bay_warehouse and cint(row.enabled):
 				errors.append(
-					_("Row {0}: set a Service Bay (WIP) Warehouse for {1}, or set Material Issue Policy to 'Not Required'").format(
-						row.idx, row.company
+					_("Row {0}: Store and Service Bay warehouses must be different").format(row.idx)
+				)
+			if (
+				self.material_issue_policy != "Not Required"
+				and not row.service_bay_warehouse
+				and cint(row.enabled)
+			):
+				errors.append(
+					_(
+						"Row {0}: set a Service Bay (WIP) Warehouse for {1}, or set Material Issue Policy to 'Not Required'"
+					).format(row.idx, row.company)
+				)
+			if (
+				row.cost_center
+				and frappe.db.get_value("Cost Center", row.cost_center, "company") != row.company
+			):
+				errors.append(
+					_("Row {0}: cost center {1} does not belong to {2}").format(
+						row.idx, row.cost_center, row.company
 					)
 				)
-			if row.cost_center and frappe.db.get_value("Cost Center", row.cost_center, "company") != row.company:
-				errors.append(_("Row {0}: cost center {1} does not belong to {2}").format(row.idx, row.cost_center, row.company))
-			if row.taxes_and_charges and frappe.db.get_value(
-				"Sales Taxes and Charges Template", row.taxes_and_charges, "company"
-			) != row.company:
-				errors.append(_("Row {0}: tax template {1} does not belong to {2}").format(row.idx, row.taxes_and_charges, row.company))
+			if (
+				row.taxes_and_charges
+				and frappe.db.get_value("Sales Taxes and Charges Template", row.taxes_and_charges, "company")
+				!= row.company
+			):
+				errors.append(
+					_("Row {0}: tax template {1} does not belong to {2}").format(
+						row.idx, row.taxes_and_charges, row.company
+					)
+				)
 			if not row.short_label:
 				row.short_label = (frappe.db.get_value("Company", row.company, "abbr") or row.company)[:16]
 
@@ -49,7 +68,10 @@ class CarCupidSettings(Document):
 			self.default_company = enabled[0]
 		if self.max_discount_without_approval and not (0 <= self.max_discount_without_approval <= 100):
 			errors.append(_("Max discount must be between 0 and 100"))
-		if self.cash_mode_of_payment and frappe.db.get_value("Mode of Payment", self.cash_mode_of_payment, "type") != "Cash":
+		if (
+			self.cash_mode_of_payment
+			and frappe.db.get_value("Mode of Payment", self.cash_mode_of_payment, "type") != "Cash"
+		):
 			errors.append(_("{0} is not a Cash type Mode of Payment").format(self.cash_mode_of_payment))
 		if errors:
 			frappe.throw("<br>".join(errors), title=_("Invalid Settings"))

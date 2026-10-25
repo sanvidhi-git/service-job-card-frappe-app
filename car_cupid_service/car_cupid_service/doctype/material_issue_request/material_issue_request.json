@@ -2,6 +2,7 @@
  "actions": [],
  "autoname": "naming_series:",
  "creation": "2026-10-25 12:00:00.000000",
+ "default_print_format": "Car Cupid Issue Slip",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [

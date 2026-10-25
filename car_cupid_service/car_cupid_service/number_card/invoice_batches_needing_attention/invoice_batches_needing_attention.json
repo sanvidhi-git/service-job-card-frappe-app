@@ -1,0 +1,21 @@
+{
+ "creation": "2026-10-25 12:00:00.000000",
+ "docstatus": 0,
+ "doctype": "Number Card",
+ "document_type": "Invoice Batch",
+ "dynamic_filters_json": "[]",
+ "filters_json": "[[\"Invoice Batch\", \"status\", \"in\", [\"Failed\", \"Partially Submitted\"], false]]",
+ "function": "Count",
+ "idx": 0,
+ "is_public": 1,
+ "is_standard": 1,
+ "label": "Invoice Batches Needing Attention",
+ "modified": "2026-10-25 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Car Cupid Service",
+ "name": "Invoice Batches Needing Attention",
+ "owner": "Administrator",
+ "show_percentage_stats": 0,
+ "stats_time_interval": "Daily",
+ "type": "Document Type"
+}

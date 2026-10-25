@@ -20,7 +20,9 @@ from car_cupid_service.services.settings import (
 def get_boot() -> dict:
 	settings = get_settings()
 	roles = set(frappe.get_roles())
-	mode_types = frappe.get_all("Mode of Payment", filters={"enabled": 1}, fields=["name", "type"], order_by="name")
+	mode_types = frappe.get_all(
+		"Mode of Payment", filters={"enabled": 1}, fields=["name", "type"], order_by="name"
+	)
 	companies = [
 		{
 			"company": c.company,
@@ -47,15 +49,31 @@ def get_boot() -> dict:
 		"denominations": denominations(),
 		"open_session": get_open_session(),
 		"sales_person": line_service.get_user_sales_person(),
-		"sales_persons": frappe.get_all("Sales Person", filters={"enabled": 1, "is_group": 0}, pluck="name", limit=500),
+		"sales_persons": frappe.get_all(
+			"Sales Person", filters={"enabled": 1, "is_group": 0}, pluck="name", limit=500
+		),
 		"technicians": frappe.get_all(
-			"Employee", filters={"status": "Active"}, fields=["name", "employee_name"], limit=500, order_by="employee_name"
+			"Employee",
+			filters={"status": "Active"},
+			fields=["name", "employee_name"],
+			limit=500,
+			order_by="employee_name",
 		),
 		"is_supervisor": is_supervisor(),
 		"can": {
 			"bill": bool(roles & billing_service.BILLING_ROLES),
 			"store": bool(roles & {"Storekeeper", "Billing Supervisor", "System Manager", "Stock Manager"}),
-			"job": bool(roles & {"Service Advisor", "Counter Salesperson", "Service Engineer", "Billing Supervisor", "System Manager", "Cashier"}),
+			"job": bool(
+				roles
+				& {
+					"Service Advisor",
+					"Counter Salesperson",
+					"Service Engineer",
+					"Billing Supervisor",
+					"System Manager",
+					"Cashier",
+				}
+			),
 			"counter": bool(roles & {"Cashier", "Billing Supervisor", "Accounts Manager", "System Manager"}),
 		},
 		"setup_ok": bool(companies),
@@ -63,7 +81,9 @@ def get_boot() -> dict:
 
 
 @frappe.whitelist()
-def search_items(txt: str = "", company: str | None = None, customer: str | None = None, limit: int = 20) -> list[dict]:
+def search_items(
+	txt: str = "", company: str | None = None, customer: str | None = None, limit: int = 20
+) -> list[dict]:
 	"""Barcode first (exact), then item code / name. Each result carries company, price and stock."""
 	frappe.has_permission("Item", "read", throw=True)
 	txt = (txt or "").strip()
@@ -80,7 +100,11 @@ def search_items(txt: str = "", company: str | None = None, customer: str | None
 		codes = frappe.get_list(
 			"Item",
 			filters={"disabled": 0, "is_sales_item": 1, "has_variants": 0},
-			or_filters=[["item_code", "like", like], ["item_name", "like", like], ["item_group", "like", like]]
+			or_filters=[
+				["item_code", "like", like],
+				["item_name", "like", like],
+				["item_group", "like", like],
+			]
 			if txt
 			else None,
 			pluck="name",
@@ -152,7 +176,9 @@ def save_cash_memo(data: str | dict) -> dict:
 	data = frappe.parse_json(data)
 	name = data.get("name")
 	if not name and data.get("client_request_id"):
-		name = frappe.db.get_value("Counter Cash Memo", {"client_request_id": data["client_request_id"]}, "name")
+		name = frappe.db.get_value(
+			"Counter Cash Memo", {"client_request_id": data["client_request_id"]}, "name"
+		)
 	if name:
 		doc = frappe.get_doc("Counter Cash Memo", name)
 		doc.check_permission("write")
@@ -174,7 +200,9 @@ def memo_payload(doc) -> dict:
 
 
 @frappe.whitelist()
-def checkout_cash_memo(data: str | dict, payments: str | list, request_key: str, allow_credit: int = 0) -> dict:
+def checkout_cash_memo(
+	data: str | dict, payments: str | list, request_key: str, allow_credit: int = 0
+) -> dict:
 	data = frappe.parse_json(data)
 	memo = save_cash_memo(data)
 	result = billing_service.bill_source(
@@ -204,7 +232,16 @@ def retry_batch(batch: str) -> dict:
 def recent_memos(limit: int = 20) -> list[dict]:
 	return frappe.get_list(
 		"Counter Cash Memo",
-		fields=["name", "customer_name", "vehicle_number", "status", "net_total", "grand_total", "invoice_batch", "modified"],
+		fields=[
+			"name",
+			"customer_name",
+			"vehicle_number",
+			"status",
+			"net_total",
+			"grand_total",
+			"invoice_batch",
+			"modified",
+		],
 		filters={"modified": (">=", frappe.utils.add_days(nowdate(), -7))},
 		order_by="modified desc",
 		limit_page_length=min(cint(limit) or 20, 100),
@@ -251,12 +288,19 @@ def dashboard() -> dict:
 		}
 	return {
 		"open_jobs": count("Service Job Card", {"status": ("in", ["Open", "Work In Progress"])}),
-		"awaiting_issue": count("Material Issue Request", {"status": ("in", ["Requested", "Partially Issued"])}),
-		"ready_for_billing": count("Service Job Card", {"status": ("in", ["Ready for Billing", "Partially Billed"])}),
+		"awaiting_issue": count(
+			"Material Issue Request", {"status": ("in", ["Requested", "Partially Issued"])}
+		),
+		"ready_for_billing": count(
+			"Service Job Card", {"status": ("in", ["Ready for Billing", "Partially Billed"])}
+		),
 		"billed_not_delivered": count("Service Job Card", {"status": "Billed"}),
 		"overdue": count(
 			"Service Job Card",
-			{"status": ("not in", ["Billed", "Delivered", "Cancelled"]), "promised_delivery": ("<", frappe.utils.now())},
+			{
+				"status": ("not in", ["Billed", "Delivered", "Cancelled"]),
+				"promised_delivery": ("<", frappe.utils.now()),
+			},
 		),
 		"draft_memos": count("Counter Cash Memo", {"status": "Draft"}),
 		"failed_batches": count("Invoice Batch", {"status": ("in", ["Failed", "Partially Submitted"])}),

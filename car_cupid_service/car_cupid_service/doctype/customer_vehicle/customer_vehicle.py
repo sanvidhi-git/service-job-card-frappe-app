@@ -35,9 +35,9 @@ class CustomerVehicle(Document):
 		fmt = frappe.db.get_single_value("Car Cupid Settings", "vehicle_number_format")
 		if fmt != "Free Text" and not is_valid_indian_number(self.vehicle_number):
 			frappe.throw(
-				_("{0} does not look like an Indian registration number (e.g. MH12AB1234 or 22BH1234AA).").format(
-					frappe.bold(self.vehicle_number)
-				),
+				_(
+					"{0} does not look like an Indian registration number (e.g. MH12AB1234 or 22BH1234AA)."
+				).format(frappe.bold(self.vehicle_number)),
 				title=_("Check Vehicle Number"),
 			)
 		self.fill_contact()
@@ -45,7 +45,10 @@ class CustomerVehicle(Document):
 
 	def fill_contact(self):
 		if self.customer and not (self.mobile_no and self.email_id):
-			mobile, email = frappe.db.get_value("Customer", self.customer, ["mobile_no", "email_id"]) or (None, None)
+			mobile, email = frappe.db.get_value("Customer", self.customer, ["mobile_no", "email_id"]) or (
+				None,
+				None,
+			)
 			self.mobile_no = self.mobile_no or mobile
 			self.email_id = self.email_id or email
 
@@ -53,5 +56,8 @@ class CustomerVehicle(Document):
 		before = self.get_doc_before_save()
 		if before and before.customer != self.customer:
 			self.add_comment(
-				"Info", _("Owner changed from {0} to {1} by {2}").format(before.customer, self.customer, frappe.session.user)
+				"Info",
+				_("Owner changed from {0} to {1} by {2}").format(
+					before.customer, self.customer, frappe.session.user
+				),
 			)

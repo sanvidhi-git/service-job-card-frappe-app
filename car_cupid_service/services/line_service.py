@@ -94,9 +94,14 @@ def get_price(item_code: str, company: str, customer: str | None = None, uom: st
 	price = best[1]
 	rate = flt(price.price_list_rate)
 	if price.uom != uom:
-		factor = flt(
-			frappe.db.get_value("UOM Conversion Detail", {"parent": item_code, "uom": uom}, "conversion_factor")
-		) or 1
+		factor = (
+			flt(
+				frappe.db.get_value(
+					"UOM Conversion Detail", {"parent": item_code, "uom": uom}, "conversion_factor"
+				)
+			)
+			or 1
+		)
 		rate = rate * factor
 	return rate
 
@@ -111,7 +116,16 @@ def get_line_defaults(item_code: str, company: str | None = None, customer: str 
 	item = frappe.db.get_value(
 		"Item",
 		item_code,
-		["item_name", "is_stock_item", "stock_uom", "sales_uom", "item_group", "disabled", "is_sales_item", "has_variants"],
+		[
+			"item_name",
+			"is_stock_item",
+			"stock_uom",
+			"sales_uom",
+			"item_group",
+			"disabled",
+			"is_sales_item",
+			"has_variants",
+		],
 		as_dict=True,
 	)
 	if not item:
@@ -143,7 +157,9 @@ def validate_lines(doc, table: str = "items", is_job_card: bool = False):
 	companies = get_company_map()
 	if not companies:
 		frappe.throw(
-			_("No companies are enabled in Car Cupid Settings. Ask your System Manager to configure them first."),
+			_(
+				"No companies are enabled in Car Cupid Settings. Ask your System Manager to configure them first."
+			),
 			title=_("Setup Incomplete"),
 		)
 	supervisor = is_supervisor()
@@ -157,7 +173,16 @@ def validate_lines(doc, table: str = "items", is_job_card: bool = False):
 		item = frappe.db.get_value(
 			"Item",
 			row.item_code,
-			["item_name", "is_stock_item", "stock_uom", "sales_uom", "item_group", "disabled", "is_sales_item", "has_variants"],
+			[
+				"item_name",
+				"is_stock_item",
+				"stock_uom",
+				"sales_uom",
+				"item_group",
+				"disabled",
+				"is_sales_item",
+				"has_variants",
+			],
 			as_dict=True,
 		)
 		if not item:
@@ -183,19 +208,23 @@ def validate_lines(doc, table: str = "items", is_job_card: bool = False):
 			for field in LOCKED_AFTER_BILLING:
 				if str(prev.get(field) or "") != str(row.get(field) or ""):
 					errors.append(
-						_("{0}: {1} cannot be changed after the line is invoiced. Cancel/return the invoice instead.").format(
-							label, frappe.unscrub(field)
-						)
+						_(
+							"{0}: {1} cannot be changed after the line is invoiced. Cancel/return the invoice instead."
+						).format(label, frappe.unscrub(field))
 					)
 		if flt(row.qty) < flt(row.billed_qty):
-			errors.append(_("{0}: quantity cannot be less than the already invoiced quantity {1}").format(label, row.billed_qty))
+			errors.append(
+				_("{0}: quantity cannot be less than the already invoiced quantity {1}").format(
+					label, row.billed_qty
+				)
+			)
 		if is_job_card:
 			net_issued = flt(row.issued_qty) - flt(row.returned_qty)
 			if flt(row.qty) < net_issued:
 				errors.append(
-					_("{0}: {1} already issued from stores; return the extra material before reducing quantity").format(
-						label, net_issued
-					)
+					_(
+						"{0}: {1} already issued from stores; return the extra material before reducing quantity"
+					).format(label, net_issued)
 				)
 
 		# ---- company routing
@@ -206,9 +235,13 @@ def validate_lines(doc, table: str = "items", is_job_card: bool = False):
 			continue
 		if prev and prev.company and prev.company != row.company:
 			if not cint(settings.allow_company_override) and not supervisor:
-				errors.append(_("{0}: only a Billing Supervisor can change the company on a line").format(label))
+				errors.append(
+					_("{0}: only a Billing Supervisor can change the company on a line").format(label)
+				)
 			elif flt(row.issued_qty) - flt(row.returned_qty) > 0:
-				errors.append(_("{0}: return issued material before moving the line to another company").format(label))
+				errors.append(
+					_("{0}: return issued material before moving the line to another company").format(label)
+				)
 			else:
 				row.warehouse = None
 				doc.add_comment(
@@ -220,15 +253,21 @@ def validate_lines(doc, table: str = "items", is_job_card: bool = False):
 		if cint(settings.restrict_items_to_company_defaults) and not frappe.db.exists(
 			"Item Default", {"parent": row.item_code, "company": row.company}
 		):
-			errors.append(_("{0}: item is not configured (Item Defaults) for company {1}").format(label, row.company))
+			errors.append(
+				_("{0}: item is not configured (Item Defaults) for company {1}").format(label, row.company)
+			)
 
 		company_row = companies[row.company]
 		if row.is_stock_item:
 			row.warehouse = row.warehouse or company_row.default_warehouse
 			if not row.warehouse:
-				errors.append(_("{0}: set a Store Warehouse for {1} in Car Cupid Settings").format(label, row.company))
+				errors.append(
+					_("{0}: set a Store Warehouse for {1} in Car Cupid Settings").format(label, row.company)
+				)
 			elif frappe.db.get_value("Warehouse", row.warehouse, "company") != row.company:
-				errors.append(_("{0}: warehouse {1} does not belong to {2}").format(label, row.warehouse, row.company))
+				errors.append(
+					_("{0}: warehouse {1} does not belong to {2}").format(label, row.warehouse, row.company)
+				)
 		else:
 			row.warehouse = None
 
@@ -252,9 +291,9 @@ def validate_lines(doc, table: str = "items", is_job_card: bool = False):
 					pass  # unchanged value approved earlier by a supervisor
 				else:
 					errors.append(
-						_("{0}: rate {1} differs from the price list rate {2}. Only a Billing Supervisor can override prices.").format(
-							label, row.price_list_rate, standard
-						)
+						_(
+							"{0}: rate {1} differs from the price list rate {2}. Only a Billing Supervisor can override prices."
+						).format(label, row.price_list_rate, standard)
 					)
 			if not flt(row.price_list_rate) and not supervisor:
 				errors.append(_("{0}: no selling price found for company {1}").format(label, row.company))

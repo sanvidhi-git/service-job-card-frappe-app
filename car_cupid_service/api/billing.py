@@ -11,9 +11,15 @@ def validate_source(source_doctype: str, source_name: str) -> dict:
 
 
 @frappe.whitelist()
-def create_invoice_batch(source_doctype: str, source_name: str, request_key: str, payments=None, allow_credit: int = 0):
+def create_invoice_batch(
+	source_doctype: str, source_name: str, request_key: str, payments=None, allow_credit: int = 0
+):
 	return billing_service.bill_source(
-		source_doctype, source_name, request_key, frappe.parse_json(payments) if payments else [], bool(int(allow_credit or 0))
+		source_doctype,
+		source_name,
+		request_key,
+		frappe.parse_json(payments) if payments else [],
+		bool(int(allow_credit or 0)),
 	)
 
 

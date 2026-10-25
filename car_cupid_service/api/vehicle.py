@@ -22,7 +22,9 @@ def lookup(vehicle_number: str) -> dict | None:
 
 
 @frappe.whitelist()
-def search_or_create(vehicle_number: str, customer: str, make=None, model=None, colour=None, fuel_type=None) -> dict:
+def search_or_create(
+	vehicle_number: str, customer: str, make=None, model=None, colour=None, fuel_type=None
+) -> dict:
 	"""Find a vehicle by number or register it for the customer. Never silently changes the owner."""
 	number = normalize_vehicle_number(vehicle_number)
 	if not number:
@@ -33,9 +35,9 @@ def search_or_create(vehicle_number: str, customer: str, make=None, model=None, 
 		result = v.as_dict()
 		if v.customer != customer:
 			result["owner_mismatch"] = True
-			result["message"] = _("{0} is registered to {1}. Update the owner only if the vehicle was sold.").format(
-				number, v.customer_name
-			)
+			result["message"] = _(
+				"{0} is registered to {1}. Update the owner only if the vehicle was sold."
+			).format(number, v.customer_name)
 		return result
 	frappe.has_permission("Customer Vehicle", "create", throw=True)
 	v = frappe.get_doc(

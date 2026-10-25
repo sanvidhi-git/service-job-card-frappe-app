@@ -10,7 +10,13 @@ import frappe
 from frappe import _
 from frappe.utils import cint, flt, getdate
 
-SPECIFICITY = (("sales_person", 16), ("item_code", 8), ("item_group", 4), ("item_type", 2), ("for_company", 1))
+SPECIFICITY = (
+	("sales_person", 16),
+	("item_code", 8),
+	("item_group", 4),
+	("item_type", 2),
+	("for_company", 1),
+)
 
 
 def _rules():
@@ -120,7 +126,9 @@ def on_invoice_submit(si):
 				"basis": rule.basis,
 				"rate": rule.rate,
 				"incentive_amount": amount,
-				"remarks": _("Credit note against {0}").format(si.return_against) if cint(si.is_return) else None,
+				"remarks": _("Credit note against {0}").format(si.return_against)
+				if cint(si.is_return)
+				else None,
 			}
 		).insert(ignore_permissions=True)
 
@@ -129,7 +137,14 @@ def on_invoice_cancel(si):
 	for e in frappe.get_all(
 		"Service Incentive Ledger", filters={"sales_invoice": si.name}, fields=["*"], order_by="creation asc"
 	):
-		if frappe.db.exists("Service Incentive Ledger", {"against_invoice": si.name, "invoice_item": e.invoice_item, "remarks": ("like", "Invoice cancelled%")}):
+		if frappe.db.exists(
+			"Service Incentive Ledger",
+			{
+				"against_invoice": si.name,
+				"invoice_item": e.invoice_item,
+				"remarks": ("like", "Invoice cancelled%"),
+			},
+		):
 			continue
 		if e.remarks and e.remarks.startswith("Invoice cancelled"):
 			continue

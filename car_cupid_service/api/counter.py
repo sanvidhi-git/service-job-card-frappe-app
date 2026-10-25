@@ -76,7 +76,10 @@ def close_session(
 		doc.set("closing_denominations", [])
 		for d in denominations():
 			key = str(int(d)) if float(d).is_integer() else str(d)
-			doc.append("closing_denominations", {"denomination": d, "count": cint(counts.get(key) or counts.get(str(d)) or 0)})
+			doc.append(
+				"closing_denominations",
+				{"denomination": d, "count": cint(counts.get(key) or counts.get(str(d)) or 0)},
+			)
 	elif physical_cash is not None:
 		doc.physical_cash = flt(physical_cash)
 	if variance_reason:

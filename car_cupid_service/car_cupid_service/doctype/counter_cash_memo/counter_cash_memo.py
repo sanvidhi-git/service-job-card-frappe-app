@@ -30,7 +30,9 @@ class CounterCashMemo(Document):
 
 	def set_snapshot(self):
 		if self.customer:
-			cust = frappe.db.get_value("Customer", self.customer, ["customer_name", "mobile_no"], as_dict=True)
+			cust = frappe.db.get_value(
+				"Customer", self.customer, ["customer_name", "mobile_no"], as_dict=True
+			)
 			if cust:
 				self.customer_name = cust.customer_name
 				self.mobile_no = self.mobile_no or cust.mobile_no
@@ -47,7 +49,9 @@ class CounterCashMemo(Document):
 	def cancel_memo(self, reason: str | None = None):
 		self.check_permission("write")
 		if any(flt(r.billed_qty) for r in self.items):
-			frappe.throw(_("Invoiced memos cannot be cancelled here. Cancel or return the company invoices instead."))
+			frappe.throw(
+				_("Invoiced memos cannot be cancelled here. Cancel or return the company invoices instead.")
+			)
 		self.status = "Cancelled"
 		self.remarks = ((self.remarks or "") + "\n" + _("Cancelled: {0}").format(reason or "")).strip()
 		self.flags.from_system = True

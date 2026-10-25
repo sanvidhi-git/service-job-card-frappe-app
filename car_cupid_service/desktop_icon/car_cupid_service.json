@@ -1,0 +1,19 @@
+{
+ "app": "car_cupid_service",
+ "creation": "2026-10-25 12:00:00.000000",
+ "docstatus": 0,
+ "doctype": "Desktop Icon",
+ "hidden": 0,
+ "icon_type": "App",
+ "idx": 5,
+ "label": "Car Cupid Service",
+ "link": "/app/car-cupid-service",
+ "link_type": "External",
+ "logo_url": "/assets/car_cupid_service/images/car-cupid-logo.svg",
+ "modified": "2026-10-25 12:00:00.000000",
+ "modified_by": "Administrator",
+ "name": "Car Cupid Service",
+ "owner": "Administrator",
+ "roles": [],
+ "standard": 1
+}

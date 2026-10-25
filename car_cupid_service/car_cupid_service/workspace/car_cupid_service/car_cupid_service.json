@@ -1,0 +1,401 @@
+{
+ "app": "car_cupid_service",
+ "charts": [],
+ "content": "[{\"id\": \"4e6bcd5b0b\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\"><b>Car Cupid \\u2014 today</b></span>\", \"col\": 12}}, {\"id\": \"c77c1c7bd1\", \"type\": \"number_card\", \"data\": {\"number_card_name\": \"Open Job Cards\", \"col\": 3}}, {\"id\": \"b6b1be37ed\", \"type\": \"number_card\", \"data\": {\"number_card_name\": \"Ready for Billing\", \"col\": 3}}, {\"id\": \"3fd05dcb09\", \"type\": \"number_card\", \"data\": {\"number_card_name\": \"Parts Waiting at Stores\", \"col\": 3}}, {\"id\": \"7488531f1c\", \"type\": \"number_card\", \"data\": {\"number_card_name\": \"Invoice Batches Needing Attention\", \"col\": 3}}, {\"id\": \"39483cd7f4\", \"type\": \"spacer\", \"data\": {\"col\": 12}}, {\"id\": \"e97bc44598\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\"><b>Quick access</b></span>\", \"col\": 12}}, {\"id\": \"cc29cb3836\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Open POS\", \"col\": 3}}, {\"id\": \"5a85fd9b03\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Job Cards\", \"col\": 3}}, {\"id\": \"e1669cf862\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Stores Queue\", \"col\": 3}}, {\"id\": \"e727561ecf\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Cash Memos\", \"col\": 3}}, {\"id\": \"e11a9f23ae\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Counter Sessions\", \"col\": 3}}, {\"id\": \"754eb86666\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Invoice Batches\", \"col\": 3}}, {\"id\": \"d96b0c08fd\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Vehicles\", \"col\": 3}}, {\"id\": \"4bdaed5ac0\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Settings\", \"col\": 3}}, {\"id\": \"6e2559dd98\", \"type\": \"spacer\", \"data\": {\"col\": 12}}, {\"id\": \"993ced429f\", \"type\": \"card\", \"data\": {\"card_name\": \"Service\", \"col\": 4}}, {\"id\": \"a05ea3c25f\", \"type\": \"card\", \"data\": {\"card_name\": \"Counter & Billing\", \"col\": 4}}, {\"id\": \"5141016109\", \"type\": \"card\", \"data\": {\"card_name\": \"Incentives\", \"col\": 4}}, {\"id\": \"5aa2920585\", \"type\": \"card\", \"data\": {\"card_name\": \"Reports\", \"col\": 4}}, {\"id\": \"5c1d190409\", \"type\": \"card\", \"data\": {\"card_name\": \"Masters\", \"col\": 4}}]",
+ "creation": "2026-10-25 12:00:00.000000",
+ "custom_blocks": [],
+ "docstatus": 0,
+ "doctype": "Workspace",
+ "for_user": "",
+ "hide_custom": 0,
+ "icon": "car",
+ "idx": 0,
+ "indicator_color": "pink",
+ "is_hidden": 0,
+ "label": "Car Cupid Service",
+ "link_type": "DocType",
+ "links": [
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Service",
+   "link_count": 3,
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Service Job Card",
+   "link_count": 0,
+   "link_to": "Service Job Card",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Customer Vehicle",
+   "link_count": 0,
+   "link_to": "Customer Vehicle",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Material Issue Request",
+   "link_count": 0,
+   "link_to": "Material Issue Request",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Counter & Billing",
+   "link_count": 3,
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Counter Cash Memo",
+   "link_count": 0,
+   "link_to": "Counter Cash Memo",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Counter Session",
+   "link_count": 0,
+   "link_to": "Counter Session",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Invoice Batch",
+   "link_count": 0,
+   "link_to": "Invoice Batch",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Incentives",
+   "link_count": 3,
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Service Incentive Rule",
+   "link_count": 0,
+   "link_to": "Service Incentive Rule",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Service Incentive Ledger",
+   "link_count": 0,
+   "link_to": "Service Incentive Ledger",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Salesperson Incentive Statement",
+   "link_count": 0,
+   "link_to": "Salesperson Incentive Statement",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Reports",
+   "link_count": 5,
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Job Card Status",
+   "link_count": 0,
+   "link_to": "Job Card Status",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Material Fulfilment Status",
+   "link_count": 0,
+   "link_to": "Material Fulfilment Status",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Company Wise Counter Sales",
+   "link_count": 0,
+   "link_to": "Company Wise Counter Sales",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Counter Session Summary",
+   "link_count": 0,
+   "link_to": "Counter Session Summary",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Invoice Batch Exceptions",
+   "link_count": 0,
+   "link_to": "Invoice Batch Exceptions",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Masters",
+   "link_count": 6,
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Customer",
+   "link_count": 0,
+   "link_to": "Customer",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Item",
+   "link_count": 0,
+   "link_to": "Item",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Item Price",
+   "link_count": 0,
+   "link_to": "Item Price",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Sales Person",
+   "link_count": 0,
+   "link_to": "Sales Person",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Mode of Payment",
+   "link_count": 0,
+   "link_to": "Mode of Payment",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Car Cupid Settings",
+   "link_count": 0,
+   "link_to": "Car Cupid Settings",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  }
+ ],
+ "modified": "2026-10-25 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Car Cupid Service",
+ "name": "Car Cupid Service",
+ "number_cards": [
+  {
+   "label": "Open Job Cards",
+   "number_card_name": "Open Job Cards"
+  },
+  {
+   "label": "Ready for Billing",
+   "number_card_name": "Ready for Billing"
+  },
+  {
+   "label": "Parts Waiting at Stores",
+   "number_card_name": "Parts Waiting at Stores"
+  },
+  {
+   "label": "Invoice Batches Needing Attention",
+   "number_card_name": "Invoice Batches Needing Attention"
+  }
+ ],
+ "owner": "Administrator",
+ "parent_page": "",
+ "public": 1,
+ "quick_lists": [],
+ "roles": [
+  {
+   "role": "Counter Salesperson"
+  },
+  {
+   "role": "Service Advisor"
+  },
+  {
+   "role": "Service Engineer"
+  },
+  {
+   "role": "Storekeeper"
+  },
+  {
+   "role": "Cashier"
+  },
+  {
+   "role": "Billing Supervisor"
+  },
+  {
+   "role": "Accounts Manager"
+  },
+  {
+   "role": "Incentive Manager"
+  },
+  {
+   "role": "System Manager"
+  }
+ ],
+ "sequence_id": 5.0,
+ "shortcuts": [
+  {
+   "color": "Pink",
+   "doc_view": "",
+   "label": "Open POS",
+   "link_to": "car-cupid-pos",
+   "type": "Page"
+  },
+  {
+   "color": "Blue",
+   "doc_view": "List",
+   "label": "Job Cards",
+   "link_to": "Service Job Card",
+   "stats_filter": "{\"status\": [\"not in\", [\"Billed\", \"Delivered\", \"Cancelled\"]]}",
+   "type": "DocType"
+  },
+  {
+   "color": "Orange",
+   "doc_view": "List",
+   "label": "Stores Queue",
+   "link_to": "Material Issue Request",
+   "stats_filter": "{\"status\": [\"in\", [\"Requested\", \"Partially Issued\"]]}",
+   "type": "DocType"
+  },
+  {
+   "color": "Green",
+   "doc_view": "List",
+   "label": "Cash Memos",
+   "link_to": "Counter Cash Memo",
+   "stats_filter": "{\"status\": \"Draft\"}",
+   "type": "DocType"
+  },
+  {
+   "color": "Cyan",
+   "doc_view": "List",
+   "label": "Counter Sessions",
+   "link_to": "Counter Session",
+   "stats_filter": "{\"docstatus\": 0}",
+   "type": "DocType"
+  },
+  {
+   "color": "Red",
+   "doc_view": "List",
+   "label": "Invoice Batches",
+   "link_to": "Invoice Batch",
+   "stats_filter": "{\"status\": [\"in\", [\"Failed\", \"Partially Submitted\"]]}",
+   "type": "DocType"
+  },
+  {
+   "color": "Purple",
+   "doc_view": "List",
+   "label": "Vehicles",
+   "link_to": "Customer Vehicle",
+   "type": "DocType"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "",
+   "label": "Settings",
+   "link_to": "Car Cupid Settings",
+   "type": "DocType"
+  }
+ ],
+ "standard": 1,
+ "title": "Car Cupid Service",
+ "type": "Workspace"
+}

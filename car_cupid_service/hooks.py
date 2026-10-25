@@ -1,7 +1,9 @@
 app_name = "car_cupid_service"
 app_title = "Car Cupid Service"
 app_publisher = "Sanvidhi Tech Pvt Ltd"
-app_description = "Multi-company service job cards, store fulfilment, counter cash and web POS for ERPNext v16"
+app_description = (
+	"Multi-company service job cards, store fulfilment, counter cash and web POS for ERPNext v16"
+)
 app_email = "vijayshastri11@gmail.com"
 app_license = "mit"
 app_home = "/app/car-cupid-service"

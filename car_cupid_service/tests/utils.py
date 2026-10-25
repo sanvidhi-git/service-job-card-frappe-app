@@ -54,8 +54,12 @@ def _bank_account(company):
 	abbr = frappe.db.get_value("Company", company, "abbr")
 	name = f"UPI Collections - {abbr}"
 	if not frappe.db.exists("Account", name):
-		parent = frappe.db.get_value("Account", {"company": company, "account_type": "Bank", "is_group": 1}, "name")
-		parent = parent or frappe.db.get_value("Account", {"company": company, "account_name": "Bank Accounts"}, "name")
+		parent = frappe.db.get_value(
+			"Account", {"company": company, "account_type": "Bank", "is_group": 1}, "name"
+		)
+		parent = parent or frappe.db.get_value(
+			"Account", {"company": company, "account_name": "Bank Accounts"}, "name"
+		)
 		frappe.get_doc(
 			{
 				"doctype": "Account",
@@ -69,8 +73,12 @@ def _bank_account(company):
 
 
 def _mode(name, mtype, account_for):
-	mop = frappe.get_doc("Mode of Payment", name) if frappe.db.exists("Mode of Payment", name) else frappe.get_doc(
-		{"doctype": "Mode of Payment", "mode_of_payment": name, "type": mtype, "enabled": 1}
+	mop = (
+		frappe.get_doc("Mode of Payment", name)
+		if frappe.db.exists("Mode of Payment", name)
+		else frappe.get_doc(
+			{"doctype": "Mode of Payment", "mode_of_payment": name, "type": mtype, "enabled": 1}
+		)
 	)
 	have = {a.company for a in mop.get("accounts")}
 	for company, _abbr, _c in COMPANIES:
@@ -90,11 +98,15 @@ def setup_test_world():
 
 	price_list = "Standard Selling"
 	if not frappe.db.exists("Price List", price_list):
-		frappe.get_doc({"doctype": "Price List", "price_list_name": price_list, "selling": 1, "currency": "INR"}).insert()
+		frappe.get_doc(
+			{"doctype": "Price List", "price_list_name": price_list, "selling": 1, "currency": "INR"}
+		).insert()
 
 	for group in ("Products", "Services"):
 		if not frappe.db.exists("Item Group", group):
-			frappe.get_doc({"doctype": "Item Group", "item_group_name": group, "parent_item_group": "All Item Groups"}).insert()
+			frappe.get_doc(
+				{"doctype": "Item Group", "item_group_name": group, "parent_item_group": "All Item Groups"}
+			).insert()
 
 	settings = frappe.get_single("Car Cupid Settings")
 	settings.set("companies", [])
@@ -140,12 +152,22 @@ def setup_test_world():
 					"is_stock_item": is_stock,
 					"include_item_in_manufacturing": 0,
 					"valuation_rate": price * 0.5 if is_stock else 0,
-					"item_defaults": [{"company": company, "default_warehouse": _warehouse("Stores", company) if is_stock else None}],
+					"item_defaults": [
+						{
+							"company": company,
+							"default_warehouse": _warehouse("Stores", company) if is_stock else None,
+						}
+					],
 				}
 			).insert(ignore_permissions=True)
 		if not frappe.db.exists("Item Price", {"item_code": code, "price_list": price_list}):
 			frappe.get_doc(
-				{"doctype": "Item Price", "item_code": code, "price_list": price_list, "price_list_rate": price}
+				{
+					"doctype": "Item Price",
+					"item_code": code,
+					"price_list": price_list,
+					"price_list_rate": price,
+				}
 			).insert(ignore_permissions=True)
 
 	if not frappe.db.exists("Customer", CUSTOMER):
@@ -160,15 +182,31 @@ def setup_test_world():
 		).insert(ignore_permissions=True)
 	if not frappe.db.exists("Customer Vehicle", VEHICLE):
 		frappe.get_doc(
-			{"doctype": "Customer Vehicle", "vehicle_number": "mh 12 ab 1234", "customer": CUSTOMER, "make": "Hyundai", "model": "Creta"}
+			{
+				"doctype": "Customer Vehicle",
+				"vehicle_number": "mh 12 ab 1234",
+				"customer": CUSTOMER,
+				"make": "Hyundai",
+				"model": "Creta",
+			}
 		).insert(ignore_permissions=True)
 	if not frappe.db.exists("Sales Person", SALES_PERSON):
 		frappe.get_doc(
-			{"doctype": "Sales Person", "sales_person_name": SALES_PERSON, "parent_sales_person": "Sales Team", "enabled": 1}
+			{
+				"doctype": "Sales Person",
+				"sales_person_name": SALES_PERSON,
+				"parent_sales_person": "Sales Team",
+				"enabled": 1,
+			}
 		).insert(ignore_permissions=True)
 	if not frappe.db.exists("Service Incentive Rule", "CC Test 2 Percent"):
 		frappe.get_doc(
-			{"doctype": "Service Incentive Rule", "rule_name": "CC Test 2 Percent", "basis": "Percentage of Net Sales", "rate": 2}
+			{
+				"doctype": "Service Incentive Rule",
+				"rule_name": "CC Test 2 Percent",
+				"basis": "Percentage of Net Sales",
+				"rate": 2,
+			}
 		).insert(ignore_permissions=True)
 	frappe.db.commit()
 

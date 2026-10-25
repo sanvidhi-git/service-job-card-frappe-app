@@ -74,7 +74,10 @@ def quick_create(customer_name: str, mobile_no: str, email_id: str | None = None
 		frappe.throw(_("Enter a valid 10-digit mobile number"))
 	mobile = mobile[-10:]
 	existing = frappe.db.get_value(
-		"Customer", {"mobile_no": ("like", f"%{mobile}")}, ["name", "customer_name", "mobile_no"], as_dict=True
+		"Customer",
+		{"mobile_no": ("like", f"%{mobile}")},
+		["name", "customer_name", "mobile_no"],
+		as_dict=True,
 	)
 	if existing:
 		existing["existing"] = True
@@ -107,4 +110,9 @@ def quick_create(customer_name: str, mobile_no: str, email_id: str | None = None
 		contact.add_email(email_id, is_primary=1)
 	contact.insert()
 	customer.db_set({"customer_primary_contact": contact.name, "mobile_no": mobile, "email_id": email_id})
-	return {"name": customer.name, "customer_name": customer.customer_name, "mobile_no": mobile, "existing": False}
+	return {
+		"name": customer.name,
+		"customer_name": customer.customer_name,
+		"mobile_no": mobile,
+		"existing": False,
+	}

@@ -9,7 +9,9 @@ from frappe.model.document import Document
 class InvoiceBatch(Document):
 	def on_trash(self):
 		if any(r.sales_invoice for r in self.companies):
-			frappe.throw(_("An invoice batch that created invoices cannot be deleted; it is part of the audit trail."))
+			frappe.throw(
+				_("An invoice batch that created invoices cannot be deleted; it is part of the audit trail.")
+			)
 
 	@frappe.whitelist()
 	def retry(self):

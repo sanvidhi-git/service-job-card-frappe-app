@@ -51,8 +51,21 @@ def _invoices(source_doctype: str, source_name: str) -> list[dict]:
 		return []
 	return frappe.get_all(
 		"Sales Invoice",
-		filters={"cc_source_doctype": source_doctype, "cc_source_name": source_name, "docstatus": ("in", [1, 2])},
-		fields=["name", "company", "grand_total", "rounded_total", "status", "docstatus", "posting_date", "cc_invoice_batch"],
+		filters={
+			"cc_source_doctype": source_doctype,
+			"cc_source_name": source_name,
+			"docstatus": ("in", [1, 2]),
+		},
+		fields=[
+			"name",
+			"company",
+			"grand_total",
+			"rounded_total",
+			"status",
+			"docstatus",
+			"posting_date",
+			"cc_invoice_batch",
+		],
 		order_by="creation asc",
 	)
 

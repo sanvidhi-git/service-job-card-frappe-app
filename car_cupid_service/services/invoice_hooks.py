@@ -10,10 +10,15 @@ def _source_of(si):
 	if si.get("cc_source_doctype") and si.get("cc_source_name"):
 		return si.cc_source_doctype, si.cc_source_name
 	if si.get("is_return") and si.get("return_against"):
-		return frappe.db.get_value("Sales Invoice", si.return_against, ["cc_source_doctype", "cc_source_name"]) or (None, None)
+		return frappe.db.get_value(
+			"Sales Invoice", si.return_against, ["cc_source_doctype", "cc_source_name"]
+		) or (None, None)
 	if any(d.get("cc_source_row") for d in si.items):
 		row = next(d.cc_source_row for d in si.items if d.get("cc_source_row"))
-		for dt, child in (("Service Job Card", "Service Job Card Item"), ("Counter Cash Memo", "Counter Cash Memo Item")):
+		for dt, child in (
+			("Service Job Card", "Service Job Card Item"),
+			("Counter Cash Memo", "Counter Cash Memo Item"),
+		):
 			parent = frappe.db.get_value(child, row, "parent")
 			if parent:
 				return dt, parent
@@ -43,7 +48,9 @@ def on_sales_invoice_cancel(doc, method=None):
 		statuses = {c.status for c in batch.companies}
 		if statuses == {"Cancelled"}:
 			batch.db_set("status", "Cancelled")
-		batch.add_comment("Info", f"Sales Invoice {doc.name} ({doc.company}) cancelled by {frappe.session.user}")
+		batch.add_comment(
+			"Info", f"Sales Invoice {doc.name} ({doc.company}) cancelled by {frappe.session.user}"
+		)
 	refresh_source(*_source_of(doc))
 
 

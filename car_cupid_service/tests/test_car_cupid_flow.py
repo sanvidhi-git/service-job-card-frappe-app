@@ -18,7 +18,9 @@ def _key(tag):
 
 
 def _close_open_sessions():
-	for name in frappe.get_all("Counter Session", filters={"docstatus": 0, "cashier": frappe.session.user}, pluck="name"):
+	for name in frappe.get_all(
+		"Counter Session", filters={"docstatus": 0, "cashier": frappe.session.user}, pluck="name"
+	):
 		frappe.db.set_value("Counter Session", name, "docstatus", 2)
 
 
@@ -61,7 +63,9 @@ class TestCarCupidFlow(IntegrationTestCase):
 
 	def prepare_job_for_billing(self, name):
 		stock_service.request_materials(name)
-		for mir in frappe.get_all("Material Issue Request", filters={"job_card": name}, fields=["name", "pending_qty"]):
+		for mir in frappe.get_all(
+			"Material Issue Request", filters={"job_card": name}, fields=["name", "pending_qty"]
+		):
 			stock_service.record_issue(mir.name, mir.pending_qty)
 		job_card.set_work_status(name, None, "Completed")
 		return frappe.get_doc("Service Job Card", name)
@@ -105,7 +109,8 @@ class TestCarCupidFlow(IntegrationTestCase):
 		invoices = [c["sales_invoice"] for c in result["companies"]]
 		self.assertEqual(len(invoices), 3)
 		self.assertEqual(
-			{frappe.db.get_value("Sales Invoice", i, "company") for i in invoices}, {self.cca, self.ccd, self.ccc}
+			{frappe.db.get_value("Sales Invoice", i, "company") for i in invoices},
+			{self.cca, self.ccd, self.ccc},
 		)
 		for inv in invoices:
 			self.assertEqual(flt(frappe.db.get_value("Sales Invoice", inv, "outstanding_amount")), 0, inv)
@@ -128,16 +133,16 @@ class TestCarCupidFlow(IntegrationTestCase):
 		# idempotency: same key returns the same batch, no new invoices
 		again = job_card.checkout(name, payments, key)
 		self.assertEqual(again["batch"], result["batch"])
-		self.assertEqual(
-			frappe.db.count("Sales Invoice", {"cc_source_name": name, "docstatus": 1}), 3
-		)
+		self.assertEqual(frappe.db.count("Sales Invoice", {"cc_source_name": name, "docstatus": 1}), 3)
 		# a new key finds nothing left to bill
 		with self.assertRaises(BillingValidationError):
 			job_card.checkout(name, payments, _key("again"))
 
 		# incentives earned on every salesperson line
 		ledger = frappe.get_all(
-			"Service Incentive Ledger", filters={"sales_invoice": ("in", invoices)}, fields=["incentive_amount", "eligible_net_sales"]
+			"Service Incentive Ledger",
+			filters={"sales_invoice": ("in", invoices)},
+			fields=["incentive_amount", "eligible_net_sales"],
 		)
 		self.assertEqual(len(ledger), 4)
 		for e in ledger:
@@ -162,7 +167,9 @@ class TestCarCupidFlow(IntegrationTestCase):
 		self.assertEqual(jc.items[0].billed_qty, 0)
 		self.assertEqual(jc.status, "Ready for Billing")
 		net = sum(
-			frappe.get_all("Service Incentive Ledger", filters={"sales_invoice": inv}, pluck="incentive_amount")
+			frappe.get_all(
+				"Service Incentive Ledger", filters={"sales_invoice": inv}, pluck="incentive_amount"
+			)
 		)
 		self.assertAlmostEqual(net, 0, places=2)
 		batch = frappe.get_doc("Invoice Batch", result["batch"])
@@ -185,7 +192,9 @@ class TestCarCupidFlow(IntegrationTestCase):
 		self.assertEqual(memo["name"], memo_again["name"])
 		data["name"] = memo["name"]
 		total = pos.preview_bill("Counter Cash Memo", memo["name"])["grand_total"]
-		result = pos.checkout_cash_memo(data, [{"mode_of_payment": "Cash", "amount": total + 500}], _key("memo-pay"))
+		result = pos.checkout_cash_memo(
+			data, [{"mode_of_payment": "Cash", "amount": total + 500}], _key("memo-pay")
+		)
 		self.assertEqual(result["status"], "Submitted", result)
 		self.assertAlmostEqual(result["change_due"], 500, places=2)
 		self.assertEqual(len(result["companies"]), 2)
@@ -219,7 +228,9 @@ class TestCarCupidFlow(IntegrationTestCase):
 		memo = pos.save_cash_memo(data)
 		data["name"] = memo["name"]
 		total = pos.preview_bill("Counter Cash Memo", memo["name"])["grand_total"]
-		result = pos.checkout_cash_memo(data, [{"mode_of_payment": "Cash", "amount": total}], _key("fail-pay"))
+		result = pos.checkout_cash_memo(
+			data, [{"mode_of_payment": "Cash", "amount": total}], _key("fail-pay")
+		)
 		self.assertEqual(result["status"], "Partially Submitted", result)
 		failed = [c for c in result["companies"] if c["status"] == "Failed"]
 		ok = [c for c in result["companies"] if c["status"] == "Submitted"]
@@ -243,7 +254,11 @@ class TestCarCupidFlow(IntegrationTestCase):
 			pos.retry_batch(result["batch"])
 
 	def test_07_payment_short_is_refused_before_invoicing(self):
-		data = {"client_request_id": _key("short"), "customer": utils.CUSTOMER, "items": [{"item_code": "CC-CERAMIC", "qty": 1}]}
+		data = {
+			"client_request_id": _key("short"),
+			"customer": utils.CUSTOMER,
+			"items": [{"item_code": "CC-CERAMIC", "qty": 1}],
+		}
 		memo = pos.save_cash_memo(data)
 		data["name"] = memo["name"]
 		before = frappe.db.count("Sales Invoice")
@@ -276,12 +291,17 @@ class TestCarCupidFlow(IntegrationTestCase):
 	def test_09_discount_and_price_guards_for_counter_staff(self):
 		user = "cc.counter@example.com"
 		if not frappe.db.exists("User", user):
-			u = frappe.get_doc({"doctype": "User", "email": user, "first_name": "Counter", "send_welcome_email": 0})
+			u = frappe.get_doc(
+				{"doctype": "User", "email": user, "first_name": "Counter", "send_welcome_email": 0}
+			)
 			u.insert(ignore_permissions=True)
 			u.add_roles("Counter Salesperson")
 		frappe.set_user(user)
 		try:
-			base = {"customer": utils.CUSTOMER, "items": [{"item_code": "CC-CERAMIC", "qty": 1, "discount_percentage": 25}]}
+			base = {
+				"customer": utils.CUSTOMER,
+				"items": [{"item_code": "CC-CERAMIC", "qty": 1, "discount_percentage": 25}],
+			}
 			with self.assertRaises(frappe.ValidationError):
 				pos.save_cash_memo({**base, "client_request_id": _key("disc")})
 			base["items"][0].update({"discount_percentage": 0, "price_list_rate": 1})
@@ -299,8 +319,12 @@ class TestCarCupidFlow(IntegrationTestCase):
 
 	def test_10_vehicle_number_rules(self):
 		with self.assertRaises(frappe.ValidationError):
-			frappe.get_doc({"doctype": "Customer Vehicle", "vehicle_number": "HELLO", "customer": utils.CUSTOMER}).insert()
-		v = frappe.get_doc({"doctype": "Customer Vehicle", "vehicle_number": "22 bh 1234 aa", "customer": utils.CUSTOMER})
+			frappe.get_doc(
+				{"doctype": "Customer Vehicle", "vehicle_number": "HELLO", "customer": utils.CUSTOMER}
+			).insert()
+		v = frappe.get_doc(
+			{"doctype": "Customer Vehicle", "vehicle_number": "22 bh 1234 aa", "customer": utils.CUSTOMER}
+		)
 		if not frappe.db.exists("Customer Vehicle", "22BH1234AA"):
 			v.insert()
 		self.assertTrue(frappe.db.exists("Customer Vehicle", "22BH1234AA"))
@@ -313,6 +337,8 @@ class TestCarCupidFlow(IntegrationTestCase):
 		res = counter.close_session(self.session, physical_cash=expected - 500, variance_reason="Short")
 		self.assertTrue(res.get("needs_approval"))
 		self.assertEqual(frappe.db.get_value("Counter Session", self.session, "docstatus"), 0)
-		res = counter.close_session(self.session, physical_cash=expected - 500, variance_reason="Short", approve_variance=1)
+		res = counter.close_session(
+			self.session, physical_cash=expected - 500, variance_reason="Short", approve_variance=1
+		)
 		self.assertEqual(res["status"], "Closed")
 		self.assertAlmostEqual(res["variance"], -500, places=2)

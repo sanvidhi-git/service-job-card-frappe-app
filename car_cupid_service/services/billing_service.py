@@ -57,7 +57,9 @@ def eligible_lines(doc) -> tuple[list[dict], list[str]]:
 			warehouse = company_row.service_bay_warehouse
 			if qty < remaining:
 				blockers.append(
-					_("{0}: {1} of {2} still to be issued from stores").format(label, remaining - qty, remaining)
+					_("{0}: {1} of {2} still to be issued from stores").format(
+						label, remaining - qty, remaining
+					)
 				)
 		elif is_job and cint(row.is_stock_item) and settings.material_issue_policy == "Request Only":
 			# requested but stock is still in the store warehouse; invoice deducts from there
@@ -171,7 +173,11 @@ def _apply_taxes(si, company_row):
 
 
 def invoice_total(si) -> float:
-	return flt(si.rounded_total) if flt(si.rounded_total) and not cint(si.disable_rounded_total) else flt(si.grand_total)
+	return (
+		flt(si.rounded_total)
+		if flt(si.rounded_total) and not cint(si.disable_rounded_total)
+		else flt(si.grand_total)
+	)
 
 
 # ----------------------------------------------------------------------------- public entry points
@@ -248,6 +254,7 @@ def preview(source_doctype: str, source_name: str) -> dict:
 		)
 	return {
 		"companies": companies,
+		"modes": payment_service.usable_modes([c["company"] for c in companies]),
 		"grand_total": sum(c["grand_total"] for c in companies),
 		"blockers": blockers,
 		"can_bill": bool(companies),
@@ -318,7 +325,6 @@ def bill_source(
 	payments = payment_service.clean_payments(payments)
 	drafts = {company: build_invoice(source, company, clines) for company, clines in by_company.items()}
 	total = sum(invoice_total(si) for si in drafts.values())
-	paid = sum(flt(p["amount"]) for p in payments)
 	change_due = payment_service.validate_payment_cover(payments, total, allow_credit)
 	payment_service.validate_mode_accounts(payments, list(drafts))
 	session = payment_service.resolve_session(source, payments)
@@ -479,7 +485,10 @@ def _sync_memo_payments(memo, batch):
 	memo.invoice_batch = batch.name
 	if batch.payments and not memo.payments:
 		for p in batch.payments:
-			memo.append("payments", {"mode_of_payment": p.mode_of_payment, "amount": p.amount, "reference_no": p.reference_no})
+			memo.append(
+				"payments",
+				{"mode_of_payment": p.mode_of_payment, "amount": p.amount, "reference_no": p.reference_no},
+			)
 	memo.change_returned = flt(batch.change_due)
 	memo.flags.from_system = True
 	memo.flags.ignore_permissions = True
@@ -522,9 +531,11 @@ def recover_stuck_batches():
 				if done:
 					comp.status, comp.sales_invoice = "Submitted", done
 				elif comp.status == "Pending":
-					comp.status, comp.error = "Failed", _("Interrupted before the invoice was submitted. Retry.")
+					comp.status, comp.error = (
+						"Failed",
+						_("Interrupted before the invoice was submitted. Retry."),
+					)
 				comp.db_update()
 			finalise(name)
 		except Exception:
 			frappe.log_error(title=f"Car Cupid: could not recover batch {name}")
-

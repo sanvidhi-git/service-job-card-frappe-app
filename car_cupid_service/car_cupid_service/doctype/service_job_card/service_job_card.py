@@ -53,19 +53,30 @@ class ServiceJobCard(Document):
 		if any(flt(r.billed_qty) for r in self.items) and before and (customer_changed or vehicle_changed):
 			frappe.throw(_("Customer and vehicle cannot be changed after billing has started."))
 		if customer_changed or not self.customer_name:
-			cust = frappe.db.get_value("Customer", self.customer, ["customer_name", "mobile_no", "email_id"], as_dict=True)
+			cust = frappe.db.get_value(
+				"Customer", self.customer, ["customer_name", "mobile_no", "email_id"], as_dict=True
+			)
 			if cust:
 				self.customer_name = cust.customer_name
-				self.mobile_no = self.mobile_no if (before and not customer_changed) else (self.mobile_no or cust.mobile_no)
+				self.mobile_no = (
+					self.mobile_no
+					if (before and not customer_changed)
+					else (self.mobile_no or cust.mobile_no)
+				)
 				self.email_id = self.email_id or cust.email_id
 		if self.vehicle and (vehicle_changed or not self.vehicle_number):
 			v = frappe.db.get_value(
-				"Customer Vehicle", self.vehicle, ["vehicle_number", "make", "model", "variant", "colour", "customer"], as_dict=True
+				"Customer Vehicle",
+				self.vehicle,
+				["vehicle_number", "make", "model", "variant", "colour", "customer"],
+				as_dict=True,
 			)
 			if v:
 				if v.customer != self.customer:
 					frappe.msgprint(
-						_("Vehicle {0} is registered to another customer ({1}).").format(v.vehicle_number, v.customer),
+						_("Vehicle {0} is registered to another customer ({1}).").format(
+							v.vehicle_number, v.customer
+						),
 						indicator="orange",
 						alert=True,
 					)
@@ -74,7 +85,11 @@ class ServiceJobCard(Document):
 
 	def set_line_defaults(self):
 		for row in self.items:
-			if not row.technician and self.default_technician and row.item_type in ("Service", "Labour", "Package"):
+			if (
+				not row.technician
+				and self.default_technician
+				and row.item_type in ("Service", "Labour", "Package")
+			):
 				row.technician = self.default_technician
 			if not row.is_stock_item:
 				row.requested_qty = row.issued_qty = row.returned_qty = 0
@@ -103,7 +118,9 @@ class ServiceJobCard(Document):
 				if flt(row.billed_qty):
 					frappe.throw(_("Row {0} is already invoiced and cannot be cancelled").format(row.idx))
 				if flt(row.issued_qty) - flt(row.returned_qty) > 0:
-					frappe.throw(_("Row {0}: return the issued material to stores before cancelling").format(row.idx))
+					frappe.throw(
+						_("Row {0}: return the issued material to stores before cancelling").format(row.idx)
+					)
 			if row.work_status != "Cancelled" or status != "Completed":
 				row.work_status = status
 		self.save()
