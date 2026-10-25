@@ -5,21 +5,37 @@
  "doctype": "Page",
  "icon": "car",
  "idx": 0,
- "modified": "2026-10-25 12:00:00.000000",
+ "modified": "2026-10-26 01:30:00.000000",
  "modified_by": "Administrator",
  "module": "Car Cupid Service",
  "name": "car-cupid-pos",
  "owner": "Administrator",
  "page_name": "car-cupid-pos",
  "roles": [
-  {"role": "Counter Salesperson"},
-  {"role": "Service Advisor"},
-  {"role": "Service Engineer"},
-  {"role": "Storekeeper"},
-  {"role": "Cashier"},
-  {"role": "Billing Supervisor"},
-  {"role": "Accounts Manager"},
-  {"role": "System Manager"}
+  {
+   "role": "Counter Salesperson"
+  },
+  {
+   "role": "Service Advisor"
+  },
+  {
+   "role": "Service Engineer"
+  },
+  {
+   "role": "Storekeeper"
+  },
+  {
+   "role": "Cashier"
+  },
+  {
+   "role": "Billing Supervisor"
+  },
+  {
+   "role": "Accounts Manager"
+  },
+  {
+   "role": "System Manager"
+  }
  ],
  "script": null,
  "standard": "Yes",

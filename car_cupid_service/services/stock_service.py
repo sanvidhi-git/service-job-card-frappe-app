@@ -92,8 +92,13 @@ def request_materials(job_card: str, rows: list[str] | None = None, silent: bool
 				},
 			)
 		mr.flags.ignore_permissions = True
-		mr.insert()
-		mr.submit()
+		muted = frappe.flags.mute_messages
+		frappe.flags.mute_messages = True  # ERPNext's price/rate alerts mean nothing on a transfer request
+		try:
+			mr.insert()
+			mr.submit()
+		finally:
+			frappe.flags.mute_messages = muted
 
 		for (row, need), mr_item in zip(lines, mr.items, strict=True):
 			mir = frappe.get_doc(

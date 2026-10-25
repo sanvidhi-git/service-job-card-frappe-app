@@ -267,6 +267,9 @@ def preview(source_doctype: str, source_name: str) -> dict:
 	by_company: dict[str, list] = {}
 	for line in lines:
 		by_company.setdefault(line["row"].company, []).append(line)
+	from car_cupid_service.services.access import check_billing_access
+
+	check_billing_access(list(by_company))
 	companies = []
 	for company, clines in by_company.items():
 		discs, note = discounts_for(source, company, clines)
@@ -354,6 +357,9 @@ def bill_source(
 	by_company: dict[str, list] = {}
 	for line in lines:
 		by_company.setdefault(line["row"].company, []).append(line)
+	from car_cupid_service.services.access import check_billing_access
+
+	check_billing_access(list(by_company))
 
 	# 4. draft invoices + payment validation before anything is committed
 	payments = payment_service.clean_payments(payments)

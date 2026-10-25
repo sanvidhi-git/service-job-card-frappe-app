@@ -156,3 +156,5 @@ body.ccp-kiosk .page-body, body.ccp-kiosk .layout-main-section-wrapper { max-wid
 @media (prefers-reduced-motion: no-preference) {
 	.ccp-tab, .ccp-btn, .ccp-result { transition: background-color 0.12s ease, border-color 0.12s ease; }
 }
+.ccp-billrow > span:last-child { white-space: nowrap; }
+.ccp-billrow > span:first-child { min-width: 0; }

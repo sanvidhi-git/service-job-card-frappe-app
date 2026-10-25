@@ -75,6 +75,7 @@ def execute(filters=None):
 		},
 	]
 	if (filters.group_by or "Company") == "Company":
+		columns = [c for c in columns if c["fieldname"] != "company"]
 		columns.append({"label": _("Tax"), "fieldname": "tax", "fieldtype": "Currency", "width": 130})
 		for d in data:
 			d["tax"] = tax.get(d.company, 0)

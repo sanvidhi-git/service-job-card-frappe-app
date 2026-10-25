@@ -78,3 +78,6 @@ class CarCupidSettings(Document):
 
 	def on_update(self):
 		frappe.clear_cache(doctype="Car Cupid Settings")
+		from car_cupid_service.services.access import sync_company_access
+
+		sync_company_access()

@@ -47,6 +47,12 @@ doc_events = {
 	"Stock Entry": {
 		"on_cancel": "car_cupid_service.services.stock_service.on_stock_entry_cancel",
 	},
+	"User": {
+		"on_update": "car_cupid_service.services.access.on_user_update",
+	},
+	"User Permission": {
+		"after_insert": "car_cupid_service.services.access.on_user_permission_insert",
+	},
 }
 
 # Row-level security: cashiers only see their own counter sessions
@@ -66,6 +72,7 @@ doctype_list_js = {}
 # ------------------------------------------------------------------
 scheduler_events = {
 	"hourly": ["car_cupid_service.services.billing_service.recover_stuck_batches"],
+	"daily": ["car_cupid_service.services.access.sync_company_access"],
 }
 
 export_python_type_annotations = True

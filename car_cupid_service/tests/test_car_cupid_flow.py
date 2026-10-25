@@ -91,10 +91,11 @@ class TestCarCupidFlow(IntegrationTestCase):
 		name = self.three_company_job()
 		store = frappe.get_doc("Car Cupid Settings").companies[0]
 		store_before = utils.bin_qty("CC-SEATCOVER", store.default_warehouse)
+		bay_before = utils.bin_qty("CC-SEATCOVER", store.service_bay_warehouse)
 		jc = self.prepare_job_for_billing(name)
 		self.assertEqual(jc.status, "Ready for Billing")
 		self.assertEqual(utils.bin_qty("CC-SEATCOVER", store.default_warehouse), store_before - 1)
-		self.assertEqual(utils.bin_qty("CC-SEATCOVER", store.service_bay_warehouse), 1)
+		self.assertEqual(utils.bin_qty("CC-SEATCOVER", store.service_bay_warehouse), bay_before + 1)
 
 		preview = pos.preview_bill("Service Job Card", name)
 		self.assertEqual(len(preview["companies"]), 3)
@@ -122,7 +123,7 @@ class TestCarCupidFlow(IntegrationTestCase):
 			self.assertEqual(pe.cc_counter_session, self.session)
 
 		# sold exactly once: bay stock consumed by the invoice, store untouched by the sale
-		self.assertEqual(utils.bin_qty("CC-SEATCOVER", store.service_bay_warehouse), 0)
+		self.assertEqual(utils.bin_qty("CC-SEATCOVER", store.service_bay_warehouse), bay_before)
 		self.assertEqual(utils.bin_qty("CC-SEATCOVER", store.default_warehouse), store_before - 1)
 
 		jc.reload()
@@ -452,6 +453,49 @@ class TestCarCupidFlow(IntegrationTestCase):
 		inv.cancel()
 		row = frappe.get_doc("Service Job Card", name).bill_discounts[0]
 		self.assertEqual(row.status, "Pending")
+
+	def test_14_employee_restricted_cashier_bills_all_companies(self):
+		"""ERPNext limits an employee-user to one company; Car Cupid widens it for staff so billing works."""
+		email = "cc.restricted@example.com"
+		if not frappe.db.exists("User", email):
+			u = frappe.get_doc(
+				{"doctype": "User", "email": email, "first_name": "Restricted", "send_welcome_email": 0}
+			)
+			u.insert(ignore_permissions=True)
+		if not frappe.db.exists("Employee", {"user_id": email}):
+			frappe.get_doc(
+				{
+					"doctype": "Employee",
+					"first_name": "Restricted",
+					"gender": "Female",
+					"date_of_birth": "1990-01-01",
+					"date_of_joining": "2024-01-01",
+					"company": self.cca,
+					"user_id": email,
+				}
+			).insert(ignore_permissions=True)
+		frappe.get_doc("User", email).add_roles("Cashier", "Sales User", "Accounts User")
+		allowed = set(
+			frappe.get_all("User Permission", filters={"user": email, "allow": "Company"}, pluck="for_value")
+		)
+		self.assertTrue({self.cca, self.ccd, self.ccc} <= allowed, allowed)
+		frappe.set_user(email)
+		try:
+			utils.open_session(500)
+			data = {
+				"client_request_id": _key("restricted"),
+				"customer": utils.CUSTOMER,
+				"items": [{"item_code": "CC-CERAMIC", "qty": 1}, {"item_code": "CC-SEATCOVER", "qty": 1}],
+			}
+			memo = pos.save_cash_memo(data)
+			data["name"] = memo["name"]
+			total = pos.preview_bill("Counter Cash Memo", memo["name"])["grand_total"]
+			res = pos.checkout_cash_memo(
+				data, [{"mode_of_payment": "Cash", "amount": total}], _key("restricted-pay")
+			)
+			self.assertEqual(res["status"], "Submitted", res)
+		finally:
+			frappe.set_user("Administrator")
 
 	def test_99_counter_close_with_variance_needs_approval(self):
 		s = counter.get_session(self.session)

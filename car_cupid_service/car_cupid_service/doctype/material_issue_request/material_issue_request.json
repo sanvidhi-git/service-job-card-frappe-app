@@ -1,7 +1,7 @@
 {
  "actions": [],
  "autoname": "naming_series:",
- "creation": "2026-10-25 12:00:00.000000",
+ "creation": "2026-10-26 01:30:00.000000",
  "default_print_format": "Car Cupid Issue Slip",
  "doctype": "DocType",
  "engine": "InnoDB",
@@ -90,6 +90,7 @@
   {
    "fieldname": "company",
    "fieldtype": "Link",
+   "ignore_user_permissions": 1,
    "in_standard_filter": 1,
    "label": "Company",
    "options": "Company",
@@ -123,6 +124,7 @@
   {
    "fieldname": "source_warehouse",
    "fieldtype": "Link",
+   "ignore_user_permissions": 1,
    "in_standard_filter": 1,
    "label": "From (Store)",
    "options": "Warehouse",
@@ -131,6 +133,7 @@
   {
    "fieldname": "target_warehouse",
    "fieldtype": "Link",
+   "ignore_user_permissions": 1,
    "label": "To (Service Bay)",
    "options": "Warehouse",
    "read_only": 1
@@ -222,7 +225,7 @@
  ],
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-10-25 12:00:00.000000",
+ "modified": "2026-10-26 01:30:00.000000",
  "modified_by": "Administrator",
  "module": "Car Cupid Service",
  "name": "Material Issue Request",

@@ -22,6 +22,7 @@ Built from the *Car Cupid Service — Development Blueprint v1.0* (25 Oct 2026).
 | **Material Issue Request** | Request → issue → return tracker per job line, linked to Material Request and Stock Entries. |
 | **Invoice Batch** | The multi-company billing engine's audit record: per-company invoice status, errors, attempts, payments received, allocation to each invoice. |
 | **Counter Cash Memo** | Direct retail sale without a job card. |
+| **Bill Discount lines** | Overall discount amount per company on a job card or cash memo; several lines, any companies on the bill. Posted as that company invoice's *Additional Discount on Net Total*, so GST and incentives use the discounted value. |
 | **Counter Session** | Cash drawer: opening float, cash in/out with reasons, receipts by mode, denomination count, variance with supervisor approval. |
 | **Service Incentive Rule / Ledger** | % of net sales (ex-GST), fixed per unit, or fixed per service line; most specific rule wins; reversals for credit notes and cancellations. |
 | **Reports** | Job Card Status, Material Fulfilment Status, Company Wise Counter Sales, Counter Session Summary, Salesperson Incentive Statement (with *estimated* unbilled), Invoice Batch Exceptions. |
@@ -51,7 +52,8 @@ the Mode of Payment for that company. Change is only ever given from cash.
 
 - Company is routed automatically from the item's **Item Default** (one enabled company = that company).
 - Prices come from each company's price list on the server; a counter user can't override a price.
-- Discount above the limit (default 10%) needs a Billing Supervisor; the approver is stamped on the line.
+- Discount above the limit (default 10%) needs a Billing Supervisor; the approver is stamped on the line. The same limit applies to bill discounts, as a % of that company's value; an applied bill discount is frozen and re-opens if its invoice is cancelled.
+- Staff linked to an Employee are normally limited by ERPNext to one company; Car Cupid widens their Company access to all enabled Car Cupid companies (on role assignment, on settings save, nightly, or via *Grant Company Access to Staff*) so a cashier can bill all three.
 - Billed lines are frozen (item, company, rate, discount, UOM).
 - A job line can't be reduced below what's already issued, or removed once requested/issued — only cancelled.
 - Vehicle owner mismatch is flagged; a second open job for the same vehicle is offered instead of duplicated.
@@ -64,6 +66,10 @@ the Mode of Payment for that company. Change is only ever given from cash.
 - Cashiers only see their own counter sessions; supervisors see all.
 - Stores can't over-issue, issue more than is in stock, or take back more than is with the job and unbilled.
 - Errors tell the user exactly which line and what to do next.
+
+## Implementation guide
+
+A full implementation guide for functional consultants, with configuration steps and end-user SOPs with screenshots and worked examples, is maintained as a shared document (ask Sanvidhi Tech for the link).
 
 ## Install
 

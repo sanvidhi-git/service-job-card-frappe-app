@@ -487,9 +487,9 @@ class CarCupidPOS {
 		const total = gross - total_disc;
 		const split = Object.entries(groups)
 			.map(([c, rows]) => {
-				const amt = rows.reduce((a, r) => a + this.line_amount(r), 0) - disc_of(c);
+				const gross_c = rows.reduce((a, r) => a + this.line_amount(r), 0);
 				const co = this.company(c);
-				return { co, amt, disc: disc_of(c) };
+				return { co, amt: gross_c - disc_of(c), gross: gross_c, disc: disc_of(c) };
 			})
 			.filter((x) => x.amt > 0);
 		const no_session = !this.boot.open_session;
@@ -506,7 +506,7 @@ class CarCupidPOS {
 			<div class="ccp-split" aria-label="${__("Share of each company in this bill")}">
 				${split.map((x) => `<span title="${this.esc(x.co.label)} ${this.money(x.amt)}" style="width:${total ? (x.amt * 100) / total : 0}%;background:${x.co.color || "var(--gray-500)"}"></span>`).join("")}
 			</div>
-			${split.map((x) => `<div class="ccp-billrow"><span>${this.chip(x.co.company)} ${this.esc(x.co.company)}</span><span>${this.money(x.amt)}</span></div>`).join("") || `<div class="ccp-sub">${__("Lines will be grouped by company here.")}</div>`}
+			${split.map((x) => `<div class="ccp-billrow"><span>${this.chip(x.co.company)} ${this.esc(x.co.company)}</span><span>${this.money(x.gross)}</span></div>`).join("") || `<div class="ccp-sub">${__("Lines will be grouped by company here.")}</div>`}
 			${this.discount_rows_html(this.sale.discounts || [], true)}
 			${this.sale.items.length ? `<button class="ccp-btn sm ghost ccp-add-disc" style="margin-top:4px">+ ${__("Add bill discount")}</button>` : ""}
 			<div class="ccp-billrow total"><span>${__("Total before tax")}</span><span>${this.money(total)}</span></div>
@@ -1125,7 +1125,7 @@ class CarCupidPOS {
 					<div class="ccp-panel">
 						<div class="ccp-row" style="justify-content:space-between">
 							<div><div style="font-size:22px;font-weight:800;letter-spacing:.03em">${this.esc(jc.vehicle_number)}</div>
-							<div class="ccp-sub">${this.esc(jc.vehicle_description || "")} · ${this.esc(jc.name)}</div></div>
+							<div class="ccp-sub">${[jc.vehicle_description, jc.name].filter(Boolean).map((x) => this.esc(x)).join(" · ")}</div></div>
 							<span class="ccp-pill ${["Ready for Billing", "Billed"].includes(jc.status) ? "ok" : "warn"}" style="font-size:13px">${this.esc(__(jc.status))}</span>
 						</div>
 						${jc.customer_complaint ? `<div style="margin-top:8px"><span class="ccp-sub">${__("Customer asked for")}:</span> ${this.esc(jc.customer_complaint)}</div>` : ""}

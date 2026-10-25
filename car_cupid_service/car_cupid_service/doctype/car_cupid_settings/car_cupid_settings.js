@@ -13,6 +13,9 @@ frappe.ui.form.on("Car Cupid Settings", {
 	},
 	refresh(frm) {
 		frm.add_custom_button(__("Open POS"), () => car_cupid.open_pos({ tab: "sale" }));
+		frm.add_custom_button(__("Grant Company Access to Staff"), () =>
+			frappe.xcall("car_cupid_service.services.access.grant_company_access")
+		);
 		if (!(frm.doc.companies || []).length) {
 			frm.set_intro(__("Start by adding the three legal companies with their store warehouse, service bay warehouse and selling price list."), "blue");
 		}
