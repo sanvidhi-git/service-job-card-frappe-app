@@ -50,6 +50,9 @@
   "net_total",
   "total_billed_amount",
   "company_summary",
+  "sb_bill_disc",
+  "bill_discounts",
+  "total_bill_discount",
   "sb_status",
   "work_status",
   "fulfilment_status",
@@ -322,6 +325,27 @@
    "fieldname": "company_summary",
    "fieldtype": "HTML",
    "label": "Company Summary"
+  },
+  {
+   "collapsible": 1,
+   "collapsible_depends_on": "eval:doc.bill_discounts && doc.bill_discounts.length",
+   "fieldname": "sb_bill_disc",
+   "fieldtype": "Section Break",
+   "label": "Bill Discount"
+  },
+  {
+   "description": "Overall discount amount per company, applied as the invoice's additional discount on Net Total",
+   "fieldname": "bill_discounts",
+   "fieldtype": "Table",
+   "label": "Bill Discount Lines",
+   "options": "Car Cupid Bill Discount"
+  },
+  {
+   "fieldname": "total_bill_discount",
+   "fieldtype": "Currency",
+   "label": "Total Bill Discount",
+   "no_copy": 1,
+   "read_only": 1
   },
   {
    "collapsible": 1,

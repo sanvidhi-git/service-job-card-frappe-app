@@ -101,6 +101,14 @@ def get_custom_fields():
 				"insert_after": "cc_vehicle",
 				**ro,
 			},
+			{
+				"fieldname": "cc_discount_rows",
+				"fieldtype": "Small Text",
+				"label": "Car Cupid Bill Discount Rows",
+				"insert_after": "cc_counter_session",
+				"hidden": 1,
+				**ro,
+			},
 		],
 		"Sales Invoice Item": [
 			{

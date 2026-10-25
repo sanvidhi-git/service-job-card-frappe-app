@@ -21,6 +21,7 @@ frappe.ui.form.on("Counter Cash Memo Item", {
 
 frappe.ui.form.on("Counter Cash Memo", {
 	setup(frm) {
+		car_cupid.setup_bill_discount_query(frm);
 		frm.set_query("vehicle", () => ({ filters: frm.doc.customer ? { customer: frm.doc.customer } : {} }));
 		frm.set_query("item_code", "items", () => ({ filters: { is_sales_item: 1, disabled: 0, has_variants: 0 } }));
 	},
@@ -43,4 +44,10 @@ frappe.ui.form.on("Counter Cash Memo", {
 			);
 		}
 	},
+});
+
+frappe.ui.form.on("Car Cupid Bill Discount", {
+	discount_amount: (frm) => car_cupid.render_company_summary(frm),
+	company: (frm) => car_cupid.render_company_summary(frm),
+	bill_discounts_remove: (frm) => car_cupid.render_company_summary(frm),
 });

@@ -346,4 +346,99 @@ def company_summary(doc, table: str = "items") -> list[dict]:
 		c["lines"] += 1
 		c["net_total"] += flt(r.amount)
 		c["billed_amount"] += flt(r.rate) * flt(r.billed_qty)
+	for d in doc.get("bill_discounts") or []:
+		if d.company in out:
+			out[d.company]["bill_discount"] = out[d.company].get("bill_discount", 0) + flt(d.discount_amount)
 	return list(out.values())
+
+
+# ----------------------------------------------------------------------------- bill discounts
+def company_unbilled_net(doc, company: str, table: str = "items") -> float:
+	"""Net value (before tax) of the not-yet-invoiced quantity of a company's lines."""
+	total = 0.0
+	for r in doc.get(table):
+		if r.company != company or getattr(r, "work_status", None) == "Cancelled":
+			continue
+		total += flt(r.rate) * max(flt(r.qty) - flt(r.billed_qty), 0)
+	return total
+
+
+def validate_bill_discounts(doc, table: str = "items"):
+	"""Overall bill discount lines: one amount per company, applied as that invoice's additional discount.
+
+	* the company must be enabled and have unbilled lines on this document;
+	* pending discounts of a company can't exceed its unbilled net value;
+	* a discount above the max-discount % of that company's unbilled value needs a Billing Supervisor;
+	* an applied (invoiced) discount line is frozen.
+	"""
+	rows = doc.get("bill_discounts") or []
+	if not rows:
+		doc.total_bill_discount = 0
+		return
+	companies = get_company_map()
+	supervisor = is_supervisor()
+	before = doc.get_doc_before_save()
+	prev = {r.name: r for r in (before.get("bill_discounts") if before else [])}
+	errors = []
+	pending_by_company: dict[str, float] = {}
+
+	for row in rows:
+		label = _("Discount row {0}").format(row.idx)
+		old = prev.get(row.name)
+		if old and old.status == "Applied":
+			if (old.company, flt(old.discount_amount)) != (row.company, flt(row.discount_amount)):
+				errors.append(
+					_("{0}: already applied on invoice {1}; it can't be changed").format(
+						label, old.sales_invoice
+					)
+				)
+			row.status, row.sales_invoice = old.status, old.sales_invoice
+			continue
+		if row.status == "Applied":
+			continue
+		if row.company not in companies:
+			errors.append(_("{0}: company {1} is not enabled for Car Cupid").format(label, row.company))
+			continue
+		if flt(row.discount_amount) <= 0:
+			errors.append(_("{0}: discount amount must be greater than zero").format(label))
+			continue
+		if not any(r.company == row.company for r in doc.get(table)):
+			errors.append(_("{0}: there are no lines for {1} on this bill").format(label, row.company))
+			continue
+		row.added_by = row.added_by or frappe.session.user
+		pending_by_company[row.company] = pending_by_company.get(row.company, 0) + flt(row.discount_amount)
+
+	limit = max_discount()
+	for company, amount in pending_by_company.items():
+		base = company_unbilled_net(doc, company, table)
+		if amount > base + 0.005:
+			errors.append(
+				_("Bill discount of {0} for {1} is more than its unbilled value {2}").format(
+					frappe.format_value(amount, "Currency"), company, frappe.format_value(base, "Currency")
+				)
+			)
+			continue
+		pct = (amount * 100.0 / base) if base else 100
+		for row in rows:
+			if row.company != company or row.status == "Applied":
+				continue
+			old = prev.get(row.name)
+			unchanged = (
+				old and flt(old.discount_amount) == flt(row.discount_amount) and old.company == row.company
+			)
+			if pct > limit + 1e-9:
+				if supervisor:
+					if not (unchanged and row.approved_by):
+						row.approved_by = frappe.session.user
+				elif not (unchanged and row.approved_by):
+					errors.append(
+						_(
+							"Bill discount for {0} is {1}% of its value, above the {2}% limit. Ask a Billing Supervisor to approve it."
+						).format(company, round(pct, 1), limit)
+					)
+			elif not unchanged:
+				row.approved_by = None
+
+	if errors:
+		frappe.throw("<br>".join(errors), title=_("Please correct the bill discount"))
+	doc.total_bill_discount = sum(flt(r.discount_amount) for r in rows)

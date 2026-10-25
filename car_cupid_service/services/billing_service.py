@@ -96,7 +96,27 @@ def _sales_team(lines: list[dict]) -> list[dict]:
 	return team
 
 
-def build_invoice(source, company: str, lines: list[dict], batch_name: str | None = None):
+def pending_discounts(source, company: str) -> list:
+	return [d for d in (source.get("bill_discounts") or []) if d.company == company and d.status != "Applied"]
+
+
+def discounts_for(source, company: str, lines: list[dict]) -> tuple[list, str | None]:
+	"""Pending bill-discount rows to put on this company's invoice now, or a note why they wait."""
+	rows = pending_discounts(source, company)
+	if not rows:
+		return [], None
+	amount = sum(flt(d.discount_amount) for d in rows)
+	net = sum(flt(line["row"].rate) * flt(line["qty"]) for line in lines)
+	if amount > net + 0.005:
+		return [], _(
+			"Bill discount of {0} for {1} waits for the invoice that bills its remaining lines (only {2} is billed now)"
+		).format(frappe.format_value(amount, "Currency"), company, frappe.format_value(net, "Currency"))
+	return rows, None
+
+
+def build_invoice(
+	source, company: str, lines: list[dict], batch_name: str | None = None, discounts: list | None = None
+):
 	company_row = get_company_row(company)
 	si = frappe.new_doc("Sales Invoice")
 	si.company = company
@@ -151,6 +171,16 @@ def build_invoice(source, company: str, lines: list[dict], batch_name: str | Non
 		item.rate = flt(row.rate)
 
 	_apply_taxes(si, company_row)
+	if discounts:
+		# overall bill discount = ERPNext additional discount on Net Total, so GST is charged on the
+		# discounted value and the discount is spread over the item rows (incentives follow it)
+		si.apply_discount_on = "Net Total"
+		si.discount_amount = sum(flt(d.discount_amount) for d in discounts)
+		si.additional_discount_percentage = 0
+		si.cc_discount_rows = ",".join(d.name for d in discounts)
+		reasons = "; ".join(filter(None, (d.reason for d in discounts)))
+		if reasons:
+			si.remarks = f"{si.remarks}\n{_('Bill discount')}: {reasons}"
 	si.calculate_taxes_and_totals()
 	return si
 
@@ -239,7 +269,10 @@ def preview(source_doctype: str, source_name: str) -> dict:
 		by_company.setdefault(line["row"].company, []).append(line)
 	companies = []
 	for company, clines in by_company.items():
-		si = build_invoice(source, company, clines)
+		discs, note = discounts_for(source, company, clines)
+		if note:
+			blockers.append(note)
+		si = build_invoice(source, company, clines, discounts=discs)
 		row = get_company_row(company)
 		companies.append(
 			{
@@ -248,6 +281,7 @@ def preview(source_doctype: str, source_name: str) -> dict:
 				"color": row.color,
 				"lines": len(clines),
 				"net_total": flt(si.net_total),
+				"discount": flt(si.discount_amount),
 				"tax": flt(si.total_taxes_and_charges),
 				"grand_total": invoice_total(si),
 			}
@@ -323,7 +357,11 @@ def bill_source(
 
 	# 4. draft invoices + payment validation before anything is committed
 	payments = payment_service.clean_payments(payments)
-	drafts = {company: build_invoice(source, company, clines) for company, clines in by_company.items()}
+	drafts, draft_discounts = {}, {}
+	for company, clines in by_company.items():
+		discs, _note = discounts_for(source, company, clines)
+		draft_discounts[company] = [d.name for d in discs]
+		drafts[company] = build_invoice(source, company, clines, discounts=discs)
 	total = sum(invoice_total(si) for si in drafts.values())
 	change_due = payment_service.validate_payment_cover(payments, total, allow_credit)
 	payment_service.validate_mode_accounts(payments, list(drafts))
@@ -356,7 +394,12 @@ def bill_source(
 				"line_count": len(clines),
 				"net_total": flt(drafts[company].net_total),
 				"grand_total": invoice_total(drafts[company]),
-				"lines_json": json.dumps([{"row": line["row"].name, "qty": line["qty"]} for line in clines]),
+				"lines_json": json.dumps(
+					{
+						"lines": [{"row": line["row"].name, "qty": line["qty"]} for line in clines],
+						"discounts": draft_discounts[company],
+					}
+				),
 			},
 		)
 	batch.insert(ignore_permissions=True)
@@ -426,7 +469,10 @@ def _submit_companies(batch, source, drafts: dict | None = None):
 def _rebuild_from_lines(source, comp):
 	"""Rebuild a failed company's invoice from the lines it was meant to bill, re-checking eligibility."""
 	source = frappe.get_doc(source.doctype, source.name)
-	wanted = {d["row"]: flt(d["qty"]) for d in json.loads(comp.lines_json or "[]")}
+	saved = json.loads(comp.lines_json or "[]")
+	if isinstance(saved, list):  # batches created before bill discounts existed
+		saved = {"lines": saved, "discounts": []}
+	wanted = {d["row"]: flt(d["qty"]) for d in saved["lines"]}
 	lines, _blockers = eligible_lines(source)
 	lines = [
 		{**line, "qty": min(line["qty"], wanted[line["row"].name])}
@@ -435,7 +481,10 @@ def _rebuild_from_lines(source, comp):
 	]
 	if not lines:
 		frappe.throw(_("Nothing left to bill for {0} on this batch").format(comp.company))
-	return build_invoice(source, comp.company, lines)
+	discounts = [
+		d for d in pending_discounts(source, comp.company) if d.name in set(saved.get("discounts") or [])
+	]
+	return build_invoice(source, comp.company, lines, discounts=discounts)
 
 
 def _clean_error(e: Exception) -> str:

@@ -24,6 +24,10 @@ class ServiceJobCard(Document):
 			line_service.validate_lines(self, "items", is_job_card=True)
 			self.set_line_defaults()
 		source_status.refresh_quantities(self)
+		if self.flags.from_system:
+			self.total_bill_discount = sum(flt(d.discount_amount) for d in self.get("bill_discounts") or [])
+		else:
+			line_service.validate_bill_discounts(self)
 		line_service.set_totals(self)
 		source_status.set_job_card_status(self)
 

@@ -101,6 +101,7 @@ def refresh_quantities(doc):
 		else:
 			row.fulfilment_status = "Pending"
 
+	_refresh_bill_discounts(doc)
 	invoices = _invoices(doc.doctype, doc.name)
 	doc.set("invoices", [])
 	for inv in invoices:
@@ -120,6 +121,30 @@ def refresh_quantities(doc):
 		doc.total_billed_amount = live
 	else:
 		doc.grand_total = live
+
+
+def _refresh_bill_discounts(doc):
+	"""A discount row is Applied while a submitted invoice lists it in `cc_discount_rows`."""
+	rows = doc.get("bill_discounts") or []
+	if not rows:
+		return
+	applied = {}
+	for inv in frappe.get_all(
+		"Sales Invoice",
+		filters={
+			"cc_source_doctype": doc.doctype,
+			"cc_source_name": doc.name,
+			"docstatus": 1,
+			"is_return": 0,
+		},
+		fields=["name", "cc_discount_rows"],
+	):
+		for row_name in (inv.cc_discount_rows or "").split(","):
+			if row_name.strip():
+				applied[row_name.strip()] = inv.name
+	for r in rows:
+		r.sales_invoice = applied.get(r.name)
+		r.status = "Applied" if r.sales_invoice else "Pending"
 
 
 def _billing_status(rows) -> str:

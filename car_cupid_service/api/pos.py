@@ -168,6 +168,30 @@ def _apply_memo(doc, data: dict):
 			row["name"] = prev.name
 			row["discount_approved_by"] = prev.discount_approved_by
 		doc.append("items", row)
+	apply_bill_discounts(doc, data.get("bill_discounts"))
+
+
+def apply_bill_discounts(doc, discounts):
+	"""Replace the pending discount lines with the ones sent; applied lines are always kept."""
+	if discounts is None:
+		return
+	existing = {d.name: d for d in doc.get("bill_discounts") or []}
+	keep = [d for d in existing.values() if d.status == "Applied"]
+	doc.set("bill_discounts", [])
+	for d in keep:
+		doc.append("bill_discounts", d.as_dict())
+	for d in discounts:
+		prev = existing.get(d.get("name"))
+		if prev and prev.status == "Applied":
+			continue
+		row = {
+			"company": d.get("company"),
+			"discount_amount": flt(d.get("discount_amount")),
+			"reason": d.get("reason"),
+		}
+		if prev:
+			row.update({"name": prev.name, "approved_by": prev.approved_by, "added_by": prev.added_by})
+		doc.append("bill_discounts", row)
 
 
 @frappe.whitelist()

@@ -329,6 +329,130 @@ class TestCarCupidFlow(IntegrationTestCase):
 			v.insert()
 		self.assertTrue(frappe.db.exists("Customer Vehicle", "22BH1234AA"))
 
+	def test_11_bill_discount_lines_per_company(self):
+		"""Two discount lines on two companies land as additional discount on the right invoices only."""
+		data = {
+			"client_request_id": _key("disc-memo"),
+			"customer": utils.CUSTOMER,
+			"items": [
+				{"item_code": "CC-SEATCOVER", "qty": 1},
+				{"item_code": "CC-CERAMIC", "qty": 1},
+				{"item_code": "CC-LABOUR", "qty": 1},
+			],
+			"bill_discounts": [
+				{"company": self.ccd, "discount_amount": 1000, "reason": "Festive offer"},
+				{"company": self.ccd, "discount_amount": 200, "reason": "Round off"},
+				{"company": self.cca, "discount_amount": 300, "reason": "Loyalty"},
+			],
+		}
+		memo = pos.save_cash_memo(data)
+		self.assertEqual(memo["total_bill_discount"], 1500)
+		self.assertTrue(all(d["status"] == "Pending" for d in memo["bill_discounts"]))
+		data["name"] = memo["name"]
+		data["bill_discounts"] = [
+			{
+				"name": d["name"],
+				"company": d["company"],
+				"discount_amount": d["discount_amount"],
+				"reason": d["reason"],
+			}
+			for d in memo["bill_discounts"]
+		]
+		preview = pos.preview_bill("Counter Cash Memo", memo["name"])
+		disc = {c["company"]: c["discount"] for c in preview["companies"]}
+		self.assertEqual(disc[self.ccd], 1200)
+		self.assertEqual(disc[self.cca], 300)
+		result = pos.checkout_cash_memo(
+			data, [{"mode_of_payment": "Cash", "amount": preview["grand_total"]}], _key("disc-pay")
+		)
+		self.assertEqual(result["status"], "Submitted", result)
+		by_company = {
+			c["company"]: frappe.get_doc("Sales Invoice", c["sales_invoice"]) for c in result["companies"]
+		}
+		self.assertEqual(by_company[self.ccd].discount_amount, 1200)
+		self.assertEqual(by_company[self.ccd].apply_discount_on, "Net Total")
+		self.assertEqual(by_company[self.ccd].net_total, 12500 - 1200)
+		self.assertEqual(by_company[self.cca].discount_amount, 300)
+		memo_doc = frappe.get_doc("Counter Cash Memo", memo["name"])
+		self.assertTrue(all(d.status == "Applied" for d in memo_doc.bill_discounts))
+		# incentive follows the discounted net value
+		inc = frappe.get_all(
+			"Service Incentive Ledger",
+			filters={"sales_invoice": by_company[self.ccd].name},
+			pluck="eligible_net_sales",
+		)
+		self.assertAlmostEqual(sum(inc), 12500 - 1200, places=2) if inc else None
+
+	def test_12_bill_discount_guards(self):
+		base = {"customer": utils.CUSTOMER, "items": [{"item_code": "CC-MATS", "qty": 1}]}
+		# no lines for that company on the bill
+		with self.assertRaises(frappe.ValidationError):
+			pos.save_cash_memo(
+				{
+					**base,
+					"client_request_id": _key("dg1"),
+					"bill_discounts": [{"company": self.ccd, "discount_amount": 10}],
+				}
+			)
+		# more than the company's value
+		with self.assertRaises(frappe.ValidationError):
+			pos.save_cash_memo(
+				{
+					**base,
+					"client_request_id": _key("dg2"),
+					"bill_discounts": [{"company": self.ccc, "discount_amount": 2600}],
+				}
+			)
+		# above the % limit needs a supervisor: counter staff blocked, supervisor stamped
+		user = "cc.counter@example.com"
+		frappe.set_user(user)
+		try:
+			with self.assertRaises(frappe.ValidationError):
+				pos.save_cash_memo(
+					{
+						**base,
+						"client_request_id": _key("dg3"),
+						"bill_discounts": [{"company": self.ccc, "discount_amount": 500}],
+					}
+				)
+			ok = pos.save_cash_memo(
+				{
+					**base,
+					"client_request_id": _key("dg4"),
+					"bill_discounts": [{"company": self.ccc, "discount_amount": 100}],
+				}
+			)
+			self.assertFalse(ok["bill_discounts"][0]["approved_by"])
+		finally:
+			frappe.set_user("Administrator")
+		approved = pos.save_cash_memo(
+			{
+				**base,
+				"client_request_id": _key("dg5"),
+				"bill_discounts": [{"company": self.ccc, "discount_amount": 500}],
+			}
+		)
+		self.assertEqual(approved["bill_discounts"][0]["approved_by"], "Administrator")
+
+	def test_13_job_card_bill_discount_and_cancel_reopens_it(self):
+		name = self.make_job([{"item_code": "CC-CERAMIC", "qty": 1}])
+		job_card.set_work_status(name, None, "Completed")
+		jc = job_card.add_bill_discount(name, self.ccd, 2000, "Package deal")
+		self.assertEqual(jc["total_bill_discount"], 2000)
+		total = pos.preview_bill("Service Job Card", name)["grand_total"]
+		result = job_card.checkout(name, [{"mode_of_payment": "Cash", "amount": total}], _key("jdisc"))
+		inv = frappe.get_doc("Sales Invoice", result["companies"][0]["sales_invoice"])
+		self.assertEqual(inv.discount_amount, 2000)
+		row = frappe.get_doc("Service Job Card", name).bill_discounts[0]
+		self.assertEqual((row.status, row.sales_invoice), ("Applied", inv.name))
+		with self.assertRaises(frappe.ValidationError):
+			job_card.remove_bill_discount(name, row.name)
+		frappe.get_doc("Payment Entry", result["allocations"][0]["payment_entry"]).cancel()
+		inv.reload()
+		inv.cancel()
+		row = frappe.get_doc("Service Job Card", name).bill_discounts[0]
+		self.assertEqual(row.status, "Pending")
+
 	def test_99_counter_close_with_variance_needs_approval(self):
 		s = counter.get_session(self.session)
 		counter.add_movement(self.session, "Cash Out", 100, "Tea and snacks")

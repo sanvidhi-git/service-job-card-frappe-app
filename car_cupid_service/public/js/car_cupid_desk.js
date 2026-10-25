@@ -27,7 +27,17 @@ car_cupid.render_company_summary = (frm) => {
 		c.net_total += flt(r.amount);
 		c.billed_amount += flt(r.rate) * flt(r.billed_qty);
 	});
+	(frm.doc.bill_discounts || []).forEach((d) => {
+		if (rows[d.company]) rows[d.company].net_total -= flt(d.discount_amount);
+	});
 	frm.get_field("company_summary").$wrapper.html(car_cupid.company_summary_html(Object.values(rows)));
+};
+
+// limit the bill-discount company to companies that have lines on the document
+car_cupid.setup_bill_discount_query = (frm) => {
+	frm.set_query("company", "bill_discounts", () => ({
+		filters: { name: ["in", [...new Set((frm.doc.items || []).map((r) => r.company).filter(Boolean))]] },
+	}));
 };
 
 car_cupid.open_pos = (route_options) => {

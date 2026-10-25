@@ -208,7 +208,7 @@ class CarCupidPOS {
 
 	// ------------------------------------------------------------------ sale state
 	new_sale() {
-		return { client_request_id: car_cupid.uuid(), name: null, customer: this.boot.walk_in_customer || null, customer_name: null, vehicle: null, vehicles: [], items: [] };
+		return { client_request_id: car_cupid.uuid(), name: null, customer: this.boot.walk_in_customer || null, customer_name: null, vehicle: null, vehicles: [], items: [], discounts: [] };
 	}
 
 	load_sale() {
@@ -216,7 +216,10 @@ class CarCupidPOS {
 			const raw = localStorage.getItem(this.storage_key);
 			if (raw) {
 				const s = JSON.parse(raw);
-				if (s && Array.isArray(s.items)) return s;
+				if (s && Array.isArray(s.items)) {
+					s.discounts = s.discounts || [];
+					return s;
+				}
 			}
 		} catch (e) {
 			/* storage unavailable — start fresh */
@@ -476,12 +479,17 @@ class CarCupidPOS {
 	render_bill() {
 		const $b = this.$body.find(".ccp-bill");
 		const groups = this.group_by_company(this.sale.items);
-		const total = this.sale.items.reduce((a, r) => a + this.line_amount(r), 0);
+		// a discount whose company no longer has lines in the cart is dropped
+		this.sale.discounts = (this.sale.discounts || []).filter((d) => groups[d.company]);
+		const gross = this.sale.items.reduce((a, r) => a + this.line_amount(r), 0);
+		const disc_of = (c) => (this.sale.discounts || []).filter((d) => d.company === c).reduce((a, d) => a + flt(d.discount_amount), 0);
+		const total_disc = (this.sale.discounts || []).reduce((a, d) => a + flt(d.discount_amount), 0);
+		const total = gross - total_disc;
 		const split = Object.entries(groups)
 			.map(([c, rows]) => {
-				const amt = rows.reduce((a, r) => a + this.line_amount(r), 0);
+				const amt = rows.reduce((a, r) => a + this.line_amount(r), 0) - disc_of(c);
 				const co = this.company(c);
-				return { co, amt };
+				return { co, amt, disc: disc_of(c) };
 			})
 			.filter((x) => x.amt > 0);
 		const no_session = !this.boot.open_session;
@@ -499,6 +507,8 @@ class CarCupidPOS {
 				${split.map((x) => `<span title="${this.esc(x.co.label)} ${this.money(x.amt)}" style="width:${total ? (x.amt * 100) / total : 0}%;background:${x.co.color || "var(--gray-500)"}"></span>`).join("")}
 			</div>
 			${split.map((x) => `<div class="ccp-billrow"><span>${this.chip(x.co.company)} ${this.esc(x.co.company)}</span><span>${this.money(x.amt)}</span></div>`).join("") || `<div class="ccp-sub">${__("Lines will be grouped by company here.")}</div>`}
+			${this.discount_rows_html(this.sale.discounts || [], true)}
+			${this.sale.items.length ? `<button class="ccp-btn sm ghost ccp-add-disc" style="margin-top:4px">+ ${__("Add bill discount")}</button>` : ""}
 			<div class="ccp-billrow total"><span>${__("Total before tax")}</span><span>${this.money(total)}</span></div>
 			<div class="ccp-note">${__("GST is worked out per company when you collect payment. Each company gets its own tax invoice.")}</div>
 			<div style="margin-top:12px" class="ccp-row">
@@ -507,10 +517,72 @@ class CarCupidPOS {
 			</div>
 			${hint ? `<div class="ccp-note" style="color:var(--ccp-warn)">${hint}</div>` : ""}`);
 		$b.find(".ccp-pay-btn").on("click", () => this.checkout_sale());
+		$b.find(".ccp-add-disc").on("click", () =>
+			this.dialog_bill_discount(Object.keys(groups), (d) => {
+				this.sale.discounts = [...(this.sale.discounts || []), { key: car_cupid.uuid(), ...d }];
+				this.persist();
+				this.render_bill();
+			}, (c) => (groups[c] || []).reduce((a, r) => a + this.line_amount(r), 0) - disc_of(c))
+		);
+		$b.find("[data-disc]").on("click", (e) => {
+			const key = $(e.currentTarget).data("disc");
+			this.sale.discounts = (this.sale.discounts || []).filter((d) => d.key !== key);
+			this.persist();
+			this.render_bill();
+		});
 		$b.find(".ccp-save-draft").on("click", async () => {
 			const memo = await this.save_memo(true);
 			if (memo) frappe.show_alert({ message: __("Saved as {0}", [memo.name]), indicator: "green" });
 		});
+	}
+
+	discount_rows_html(rows, removable, key_field = "key") {
+		if (!rows.length) return "";
+		return rows
+			.map((d) => {
+				const applied = d.status === "Applied";
+				const rm = removable && !applied ? `<button class="ccp-btn sm ghost danger" data-disc="${this.esc(d[key_field])}" aria-label="${__("Remove discount")}">×</button>` : "";
+				return `<div class="ccp-billrow ccp-disc"><span>${this.chip(d.company)} ${__("Bill discount")}${d.reason ? ` <span class="ccp-sub">${this.esc(d.reason)}</span>` : ""}
+					${applied ? `<span class="ccp-pill ok">${__("on {0}", [this.esc(d.sales_invoice || "")])}</span>` : d.approved_by ? `<span class="ccp-pill ok">${__("approved")}</span>` : ""}</span>
+					<span class="ccp-row" style="gap:4px;flex-wrap:nowrap"><span style="color:var(--ccp-ok)">−${this.money(d.discount_amount)}</span>${rm}</span></div>`;
+			})
+			.join("");
+	}
+
+	dialog_bill_discount(companies, done, value_of) {
+		const opts = companies.map((c) => ({ value: c, label: `${this.company(c).label} — ${c}` }));
+		const d = new frappe.ui.Dialog({
+			title: __("Add bill discount"),
+			fields: [
+				{ fieldname: "company", label: __("Discount on the invoice of"), fieldtype: "Select", options: opts, default: companies[0], reqd: 1 },
+				{ fieldname: "info", fieldtype: "HTML" },
+				{ fieldname: "discount_amount", label: __("Discount amount (before GST)"), fieldtype: "Currency", reqd: 1 },
+				{ fieldname: "reason", label: __("Reason"), fieldtype: "Data", description: __("Printed on the invoice remarks, e.g. Diwali offer, loyalty, round-off") },
+			],
+			primary_action_label: __("Add discount"),
+			primary_action: (v) => {
+				const max = value_of(v.company);
+				if (flt(v.discount_amount) <= 0) return frappe.msgprint(__("Enter a discount amount."));
+				if (flt(v.discount_amount) > max + 0.005) return frappe.msgprint(__("The discount can't be more than {0}, the value of this company's lines.", [this.money(max)]));
+				d.hide();
+				done({ company: v.company, discount_amount: flt(v.discount_amount), reason: v.reason });
+			},
+		});
+		const info = () => {
+			const c = d.get_value("company");
+			const max = value_of(c);
+			const pct = max ? (flt(d.get_value("discount_amount")) * 100) / max : 0;
+			const over = pct > flt(this.boot.max_discount);
+			d.fields_dict.info.$wrapper.html(
+				`<div class="ccp"><div class="ccp-note">${__("Lines of this company total {0} before tax.", [this.money(max)])}
+				${pct ? ` ${__("This discount is {0}%.", [pct.toFixed(1)])}` : ""}
+				${over && !this.boot.is_supervisor ? `<span style="color:var(--ccp-warn)"> ${__("Above {0}% — a Billing Supervisor must approve it before billing.", [this.boot.max_discount])}</span>` : ""}</div></div>`
+			);
+		};
+		d.fields_dict.company.$input.on("change", info);
+		d.fields_dict.discount_amount.$input.on("input change", info);
+		d.show();
+		info();
 	}
 
 	// ------------------------------------------------------------------ customer & vehicle
@@ -672,6 +744,7 @@ class CarCupidPOS {
 				sales_person: r.sales_person,
 				item_type: r.item_type,
 			})),
+			bill_discounts: (this.sale.discounts || []).map((d) => ({ name: d.row_name || null, company: d.company, discount_amount: d.discount_amount, reason: d.reason })),
 		};
 	}
 
@@ -681,6 +754,7 @@ class CarCupidPOS {
 			this.sale.name = memo.name;
 			// keep server row names so approvals/edits stay attached to the same line
 			memo.items.forEach((row, i) => this.sale.items[i] && (this.sale.items[i].row_name = row.name));
+			(memo.bill_discounts || []).forEach((row, i) => this.sale.discounts[i] && (this.sale.discounts[i].row_name = row.name));
 			this.persist();
 			return memo;
 		} catch (e) {
@@ -749,7 +823,7 @@ class CarCupidPOS {
 		$w.html(`
 			<div>${(preview.companies || [])
 				.map((c) => `<div class="ccp-inv" style="--lane:${c.color || "var(--gray-500)"}"><span>${this.chip(c.company)} <b>${this.esc(c.company)}</b>
-					<span class="ccp-sub">${__("{0} line(s) · tax {1}", [c.lines, this.money(c.tax)])}</span></span><b>${this.money(c.grand_total)}</b></div>`)
+					<span class="ccp-sub">${__("{0} line(s)", [c.lines])}${flt(c.discount) ? ` · ${__("bill discount")} −${this.money(c.discount)}` : ""} · ${__("tax")} ${this.money(c.tax)}</span></span><b>${this.money(c.grand_total)}</b></div>`)
 				.join("")}</div>
 			${(preview.blockers || []).length ? `<div class="ccp-note" style="color:var(--ccp-warn);margin-top:6px">${__("Billed now; the rest stays on the job card:")}<br>${preview.blockers.map((b) => this.esc(b)).join("<br>")}</div>` : ""}
 			<div class="ccp-billrow total"><span>${__("Amount payable")}</span><span>${this.money(total)}</span></div>
@@ -1082,7 +1156,9 @@ class CarCupidPOS {
 					<div class="ccp-panel">
 						<div class="ccp-h">${__("Totals")}</div>
 						${(jc.company_summary || []).map((c) => `<div class="ccp-billrow"><span>${this.chip(c.company)}</span><span>${this.money(c.net_total)}</span></div>`).join("")}
-						<div class="ccp-billrow total"><span>${__("Total before tax")}</span><span>${this.money(jc.net_total)}</span></div>
+						${this.discount_rows_html(jc.bill_discounts || [], !closed, "name")}
+						${!closed && (jc.items || []).length && jc.billing_status !== "Fully Billed" ? `<button class="ccp-btn sm ghost ccp-add-disc" style="margin-top:4px">+ ${__("Add bill discount")}</button>` : ""}
+						<div class="ccp-billrow total"><span>${__("Total before tax")}</span><span>${this.money(flt(jc.net_total) - flt(jc.total_bill_discount))}</span></div>
 						${(jc.invoices || []).map((i) => `<div class="ccp-inv"><span>${this.chip(i.company)} ${this.esc(i.sales_invoice)}</span><span>${this.money(i.grand_total)} <span class="ccp-pill">${this.esc(i.status)}</span></span></div>`).join("")}
 					</div>
 				</div>
@@ -1106,6 +1182,19 @@ class CarCupidPOS {
 			, __("Cancel job"), __("Cancel job"))
 		);
 		$b.find(".ccp-pay-btn").on("click", () => this.checkout_job(jc));
+		const unbilled = (c) =>
+			(jc.items || []).filter((r) => r.company === c && r.work_status !== "Cancelled").reduce((a, r) => a + flt(r.rate) * Math.max(flt(r.qty) - flt(r.billed_qty), 0), 0) -
+			(jc.bill_discounts || []).filter((d) => d.company === c && d.status !== "Applied").reduce((a, d) => a + flt(d.discount_amount), 0);
+		$b.find(".ccp-add-disc").on("click", () =>
+			this.dialog_bill_discount(
+				[...new Set((jc.items || []).filter((r) => r.work_status !== "Cancelled" && flt(r.qty) > flt(r.billed_qty)).map((r) => r.company))],
+				(d) => reload(this.call("car_cupid_service.api.job_card.add_bill_discount", { job_card: jc.name, ...d }, true)),
+				unbilled
+			)
+		);
+		$b.find("[data-disc]").on("click", (e) =>
+			reload(this.call("car_cupid_service.api.job_card.remove_bill_discount", { job_card: jc.name, row: $(e.currentTarget).data("disc") }, true))
+		);
 
 		const row_of = (el) => $(el).closest(".ccp-line").data("row");
 		const row_data = (el) => (jc.items || []).find((r) => r.name === row_of(el));

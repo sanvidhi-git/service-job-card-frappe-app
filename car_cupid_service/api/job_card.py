@@ -226,6 +226,34 @@ def checkout(job_card: str, payments: str | list, request_key: str, allow_credit
 
 
 @frappe.whitelist()
+def add_bill_discount(job_card: str, company: str, discount_amount: float, reason: str | None = None) -> dict:
+	"""Overall discount for one company's invoice on this job (additional discount on Net Total)."""
+	doc = _get(job_card, "write")
+	doc.append(
+		"bill_discounts", {"company": company, "discount_amount": flt(discount_amount), "reason": reason}
+	)
+	doc.save()
+	return payload(doc)
+
+
+@frappe.whitelist()
+def remove_bill_discount(job_card: str, row: str) -> dict:
+	doc = _get(job_card, "write")
+	target = next((d for d in doc.get("bill_discounts") or [] if d.name == row), None)
+	if not target:
+		frappe.throw(_("Discount line not found; refresh the job card"))
+	if target.status == "Applied":
+		frappe.throw(
+			_("This discount is already on invoice {0}. Cancel or return that invoice instead.").format(
+				target.sales_invoice
+			)
+		)
+	doc.remove(target)
+	doc.save()
+	return payload(doc)
+
+
+@frappe.whitelist()
 def mark_delivered(job_card: str) -> dict:
 	doc = _get(job_card, "write")
 	doc.mark_delivered()

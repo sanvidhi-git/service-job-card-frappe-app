@@ -20,6 +20,10 @@ class CounterCashMemo(Document):
 			line_service.validate_lines(self, "items")
 			self.validate_vehicle()
 		source_status.refresh_quantities(self)
+		if self.flags.from_system:
+			self.total_bill_discount = sum(flt(d.discount_amount) for d in self.get("bill_discounts") or [])
+		else:
+			line_service.validate_bill_discounts(self)
 		line_service.set_totals(self)
 		self.paid_amount = sum(flt(p.amount) for p in self.payments)
 		source_status.set_memo_status(self)
