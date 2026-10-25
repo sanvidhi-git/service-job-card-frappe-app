@@ -7,3 +7,4 @@ node_modules
 car_cupid_service/public/dist
 .idea
 .vscode
+dump.rdb
