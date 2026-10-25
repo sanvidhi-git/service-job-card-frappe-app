@@ -1,0 +1,7 @@
+/* Car Cupid desk-wide helpers (status chips on forms and lists) */
+.cc-chip{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:600;line-height:18px;background:var(--bg-light-gray);color:var(--text-color);white-space:nowrap}
+.cc-summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin:6px 0 12px}
+.cc-summary .cc-card{border:1px solid var(--border-color);border-radius:10px;padding:10px 12px;background:var(--card-bg)}
+.cc-summary .cc-card .lbl{font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.04em}
+.cc-summary .cc-card .val{font-size:18px;font-weight:700;margin-top:2px}
+.cc-summary .cc-card .sub{font-size:12px;color:var(--text-muted)}

@@ -1,0 +1,107 @@
+{
+ "actions": [],
+ "creation": "2026-10-25 12:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "enabled",
+  "company",
+  "short_label",
+  "color",
+  "default_warehouse",
+  "service_bay_warehouse",
+  "cb_1",
+  "selling_price_list",
+  "taxes_and_charges",
+  "cost_center"
+ ],
+ "fields": [
+  {
+   "columns": 1,
+   "default": "1",
+   "fieldname": "enabled",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Enabled"
+  },
+  {
+   "columns": 2,
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Company",
+   "options": "Company",
+   "reqd": 1
+  },
+  {
+   "columns": 1,
+   "description": "Shown as a coloured chip on POS lines, e.g. ACC, DTL, CARE",
+   "fieldname": "short_label",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Short Label",
+   "length": 16
+  },
+  {
+   "fieldname": "color",
+   "fieldtype": "Color",
+   "label": "Chip Colour"
+  },
+  {
+   "columns": 2,
+   "description": "Saleable stock is picked from here",
+   "fieldname": "default_warehouse",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Store Warehouse",
+   "options": "Warehouse"
+  },
+  {
+   "columns": 2,
+   "description": "Material issued to a job is transferred here; the invoice deducts stock from here",
+   "fieldname": "service_bay_warehouse",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Service Bay (WIP) Warehouse",
+   "options": "Warehouse"
+  },
+  {
+   "fieldname": "cb_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "columns": 2,
+   "fieldname": "selling_price_list",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Selling Price List",
+   "options": "Price List"
+  },
+  {
+   "fieldname": "taxes_and_charges",
+   "fieldtype": "Link",
+   "label": "Sales Taxes Template",
+   "options": "Sales Taxes and Charges Template"
+  },
+  {
+   "fieldname": "cost_center",
+   "fieldtype": "Link",
+   "label": "Cost Center",
+   "options": "Cost Center"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-10-25 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Car Cupid Service",
+ "name": "Car Cupid Company",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}

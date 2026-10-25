@@ -1,0 +1,393 @@
+{
+ "actions": [],
+ "creation": "2026-10-25 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "sb_companies",
+  "companies",
+  "default_company",
+  "cb_c1",
+  "allow_company_override",
+  "auto_route_company_from_item",
+  "restrict_items_to_company_defaults",
+  "sb_customer",
+  "walk_in_customer",
+  "default_customer_group",
+  "default_territory",
+  "cb_cu1",
+  "vehicle_required_for_pos",
+  "vehicle_number_format",
+  "sb_material",
+  "material_issue_policy",
+  "auto_create_material_request",
+  "cb_m1",
+  "material_request_lead_days",
+  "sb_billing",
+  "require_work_completion",
+  "allow_partial_billing",
+  "max_discount_without_approval",
+  "cb_b1",
+  "allow_credit_sale",
+  "payment_allocation_policy",
+  "require_open_session_for_billing",
+  "sb_counter",
+  "cash_mode_of_payment",
+  "cash_variance_tolerance",
+  "cb_cc1",
+  "denominations",
+  "one_open_session_per_user"
+ ],
+ "fields": [
+  {
+   "fieldname": "sb_companies",
+   "fieldtype": "Section Break",
+   "label": "Companies"
+  },
+  {
+   "fieldname": "companies",
+   "fieldtype": "Table",
+   "label": "Enabled Companies",
+   "options": "Car Cupid Company",
+   "reqd": 1
+  },
+  {
+   "fieldname": "default_company",
+   "fieldtype": "Link",
+   "label": "Default Company",
+   "options": "Company"
+  },
+  {
+   "fieldname": "cb_c1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "1",
+   "fieldname": "allow_company_override",
+   "fieldtype": "Check",
+   "label": "Allow Counter Staff to Change Line Company"
+  },
+  {
+   "default": "1",
+   "description": "If an item has an Item Default for exactly one enabled company, that company is used automatically",
+   "fieldname": "auto_route_company_from_item",
+   "fieldtype": "Check",
+   "label": "Auto-pick Company from Item Defaults"
+  },
+  {
+   "default": "0",
+   "description": "Require an Item Default row for the line company",
+   "fieldname": "restrict_items_to_company_defaults",
+   "fieldtype": "Check",
+   "label": "Only Sell Items Configured for the Line Company"
+  },
+  {
+   "fieldname": "sb_customer",
+   "fieldtype": "Section Break",
+   "label": "Customers & Vehicles"
+  },
+  {
+   "fieldname": "walk_in_customer",
+   "fieldtype": "Link",
+   "label": "Walk-in Customer",
+   "options": "Customer"
+  },
+  {
+   "fieldname": "default_customer_group",
+   "fieldtype": "Link",
+   "label": "Customer Group for New Customers",
+   "options": "Customer Group"
+  },
+  {
+   "fieldname": "default_territory",
+   "fieldtype": "Link",
+   "label": "Territory for New Customers",
+   "options": "Territory"
+  },
+  {
+   "fieldname": "cb_cu1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "vehicle_required_for_pos",
+   "fieldtype": "Check",
+   "label": "Vehicle Mandatory for Direct POS"
+  },
+  {
+   "default": "Indian Registration",
+   "fieldname": "vehicle_number_format",
+   "fieldtype": "Select",
+   "label": "Vehicle Number Format",
+   "options": "Indian Registration\nFree Text"
+  },
+  {
+   "fieldname": "sb_material",
+   "fieldtype": "Section Break",
+   "label": "Material Fulfilment"
+  },
+  {
+   "default": "Issue Required for Stock Items",
+   "description": "Issue Required: stock lines on a job card must be issued from stores before they can be billed",
+   "fieldname": "material_issue_policy",
+   "fieldtype": "Select",
+   "label": "Material Issue Policy",
+   "options": "Issue Required for Stock Items\nRequest Only\nNot Required"
+  },
+  {
+   "default": "0",
+   "fieldname": "auto_create_material_request",
+   "fieldtype": "Check",
+   "label": "Auto-create Material Request on Save"
+  },
+  {
+   "fieldname": "cb_m1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "material_request_lead_days",
+   "fieldtype": "Int",
+   "label": "Required-by Lead Days"
+  },
+  {
+   "fieldname": "sb_billing",
+   "fieldtype": "Section Break",
+   "label": "Billing"
+  },
+  {
+   "default": "1",
+   "fieldname": "require_work_completion",
+   "fieldtype": "Check",
+   "label": "Service Lines Must Be Completed Before Billing"
+  },
+  {
+   "default": "0",
+   "fieldname": "allow_partial_billing",
+   "fieldtype": "Check",
+   "label": "Allow Partial Billing"
+  },
+  {
+   "default": "10",
+   "fieldname": "max_discount_without_approval",
+   "fieldtype": "Percent",
+   "label": "Max Discount % Without Approval"
+  },
+  {
+   "fieldname": "cb_b1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "description": "Only Billing Supervisors can bill with an unpaid balance even when enabled",
+   "fieldname": "allow_credit_sale",
+   "fieldtype": "Check",
+   "label": "Allow Billing With Unpaid Balance"
+  },
+  {
+   "default": "Proportional to Invoice Value",
+   "fieldname": "payment_allocation_policy",
+   "fieldtype": "Select",
+   "label": "Payment Allocation Policy",
+   "options": "Proportional to Invoice Value\nSequential by Company"
+  },
+  {
+   "default": "1",
+   "fieldname": "require_open_session_for_billing",
+   "fieldtype": "Check",
+   "label": "Require Open Counter Session to Collect Payment"
+  },
+  {
+   "fieldname": "sb_counter",
+   "fieldtype": "Section Break",
+   "label": "Counter Cash"
+  },
+  {
+   "fieldname": "cash_mode_of_payment",
+   "fieldtype": "Link",
+   "label": "Cash Mode of Payment",
+   "options": "Mode of Payment"
+  },
+  {
+   "default": "50",
+   "fieldname": "cash_variance_tolerance",
+   "fieldtype": "Currency",
+   "label": "Cash Variance Tolerance"
+  },
+  {
+   "fieldname": "cb_cc1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "500,200,100,50,20,10,5,2,1",
+   "fieldname": "denominations",
+   "fieldtype": "Data",
+   "label": "Note / Coin Denominations"
+  },
+  {
+   "default": "1",
+   "fieldname": "one_open_session_per_user",
+   "fieldtype": "Check",
+   "label": "One Open Session per Cashier"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "issingle": 1,
+ "links": [],
+ "modified": "2026-10-25 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Car Cupid Service",
+ "name": "Car Cupid Settings",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "amend": 0,
+   "cancel": 0,
+   "create": 1,
+   "delete": 0,
+   "email": 1,
+   "export": 1,
+   "permlevel": 0,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "submit": 0,
+   "write": 1
+  },
+  {
+   "amend": 0,
+   "cancel": 0,
+   "create": 0,
+   "delete": 0,
+   "email": 1,
+   "export": 0,
+   "permlevel": 0,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Counter Salesperson",
+   "share": 1,
+   "submit": 0,
+   "write": 0
+  },
+  {
+   "amend": 0,
+   "cancel": 0,
+   "create": 0,
+   "delete": 0,
+   "email": 1,
+   "export": 0,
+   "permlevel": 0,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Service Advisor",
+   "share": 1,
+   "submit": 0,
+   "write": 0
+  },
+  {
+   "amend": 0,
+   "cancel": 0,
+   "create": 0,
+   "delete": 0,
+   "email": 1,
+   "export": 0,
+   "permlevel": 0,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Service Engineer",
+   "share": 1,
+   "submit": 0,
+   "write": 0
+  },
+  {
+   "amend": 0,
+   "cancel": 0,
+   "create": 0,
+   "delete": 0,
+   "email": 1,
+   "export": 0,
+   "permlevel": 0,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Storekeeper",
+   "share": 1,
+   "submit": 0,
+   "write": 0
+  },
+  {
+   "amend": 0,
+   "cancel": 0,
+   "create": 0,
+   "delete": 0,
+   "email": 1,
+   "export": 0,
+   "permlevel": 0,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Cashier",
+   "share": 1,
+   "submit": 0,
+   "write": 0
+  },
+  {
+   "amend": 0,
+   "cancel": 0,
+   "create": 0,
+   "delete": 0,
+   "email": 1,
+   "export": 1,
+   "permlevel": 0,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Billing Supervisor",
+   "share": 1,
+   "submit": 0,
+   "write": 0
+  },
+  {
+   "amend": 0,
+   "cancel": 0,
+   "create": 0,
+   "delete": 0,
+   "email": 1,
+   "export": 1,
+   "permlevel": 0,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Accounts Manager",
+   "share": 1,
+   "submit": 0,
+   "write": 0
+  },
+  {
+   "amend": 0,
+   "cancel": 0,
+   "create": 0,
+   "delete": 0,
+   "email": 1,
+   "export": 0,
+   "permlevel": 0,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Incentive Manager",
+   "share": 1,
+   "submit": 0,
+   "write": 0
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

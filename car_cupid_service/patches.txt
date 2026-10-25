@@ -1,0 +1,4 @@
+[pre_model_sync]
+
+[post_model_sync]
+car_cupid_service.patches.v1_0.setup_custom_fields_and_roles
