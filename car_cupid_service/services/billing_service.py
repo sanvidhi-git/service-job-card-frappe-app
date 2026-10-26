@@ -151,6 +151,7 @@ def build_invoice(
 			"cc_sales_person": row.sales_person,
 			"cc_item_type": row.item_type,
 			"cc_source_row": row.name,
+			"cc_incentive_rate": flt(row.get("sales_incentive_rate")),
 		}
 		if line["warehouse"]:
 			item["warehouse"] = line["warehouse"]

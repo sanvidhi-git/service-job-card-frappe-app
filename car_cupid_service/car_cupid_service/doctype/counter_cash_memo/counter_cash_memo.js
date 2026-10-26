@@ -13,6 +13,7 @@ frappe.ui.form.on("Counter Cash Memo Item", {
 			uom: d.uom,
 			warehouse: d.warehouse,
 			price_list_rate: d.price_list_rate,
+			sales_incentive_rate: d.sales_incentive_rate,
 		});
 	},
 	qty: (frm) => car_cupid.render_company_summary(frm),

@@ -1,7 +1,7 @@
 {
  "actions": [],
  "autoname": "naming_series:",
- "creation": "2026-10-26 01:30:00.000000",
+ "creation": "2026-10-26 08:00:00.000000",
  "default_print_format": "Car Cupid Counter Closing",
  "doctype": "DocType",
  "engine": "InnoDB",
@@ -231,7 +231,7 @@
  "index_web_pages_for_search": 0,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-10-26 01:30:00.000000",
+ "modified": "2026-10-26 08:00:00.000000",
  "modified_by": "Administrator",
  "module": "Car Cupid Service",
  "name": "Counter Session",

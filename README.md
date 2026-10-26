@@ -24,6 +24,7 @@ Built from the *Car Cupid Service — Development Blueprint v1.0* (25 Oct 2026).
 | **Counter Cash Memo** | Direct retail sale without a job card. |
 | **Bill Discount lines** | Overall discount amount per company on a job card or cash memo; several lines, any companies on the bill. Posted as that company invoice's *Additional Discount on Net Total*, so GST and incentives use the discounted value. |
 | **Counter Session** | Cash drawer: opening float, cash in/out with reasons, receipts by mode, denomination count, variance with supervisor approval. |
+| **Item sales incentive** | `custom_sales_incentive` on Item (Sales tab): a fixed amount per unit. Captured on the job/memo line when the item is added and paid as qty × rate to that line's salesperson on invoice submit; credit notes and cancellations reverse it. Items with 0 fall back to the rules below. |
 | **Service Incentive Rule / Ledger** | % of net sales (ex-GST), fixed per unit, or fixed per service line; most specific rule wins; reversals for credit notes and cancellations. |
 | **Reports** | Job Card Status, Material Fulfilment Status, Company Wise Counter Sales, Counter Session Summary, Salesperson Incentive Statement (with *estimated* unbilled), Invoice Batch Exceptions. |
 | **Print formats** | Consolidated customer memo (company-wise sections + legal note), Job Card / intake, Material Issue Slip, Counter Closing. Each company's own Sales Invoice prints with its normal format. |

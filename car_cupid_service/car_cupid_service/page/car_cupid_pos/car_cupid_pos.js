@@ -377,6 +377,7 @@ class CarCupidPOS {
 				discount_percentage: 0,
 				sales_person: this.boot.sales_person || null,
 				actual_qty: d.actual_qty,
+				sales_incentive_rate: d.sales_incentive_rate,
 			});
 		}
 		frappe.utils.play_sound("click");
@@ -420,6 +421,7 @@ class CarCupidPOS {
 							return `<div class="ccp-line" data-key="${r.key}">
 								<div><div class="nm">${this.esc(r.item_name)}</div>
 									<div class="ccp-sub">${this.esc(r.item_code)} · ${this.money(r.price_list_rate)} / ${this.esc(r.uom || "")}</div>
+									${flt(r.sales_incentive_rate) ? `<div class="ccp-row" style="margin-top:4px"><span class="ccp-pill ok" title="${__("Paid to the line's salesperson for each unit invoiced")}">${__("Incentive {0} × {1} = {2}", [this.money(r.sales_incentive_rate), flt(r.qty), this.money(flt(r.sales_incentive_rate) * flt(r.qty))])}</span></div>` : ""}
 									${low ? `<div class="warn">${__("Only {0} in stock", [r.actual_qty])}</div>` : ""}
 									${over ? `<div class="warn">${__("Discount above {0}% needs a supervisor", [this.boot.max_discount])}</div>` : ""}
 								</div>
@@ -1092,7 +1094,8 @@ class CarCupidPOS {
 								<div><div class="nm">${this.esc(r.item_name)} ${r.work_status === "Cancelled" ? `<span class="ccp-pill bad">${__("Cancelled")}</span>` : ""}</div>
 									<div class="ccp-sub">${this.esc(r.item_code)} · ${flt(r.qty)} × ${this.money(r.rate)}${flt(r.discount_percentage) ? ` (−${flt(r.discount_percentage)}%)` : ""}
 									${r.is_stock_item ? ` · ${__("issued")} ${flt(r.issued_qty) - flt(r.returned_qty)}/${flt(r.qty)}` : ""}${flt(r.billed_qty) ? ` · ${__("billed")} ${flt(r.billed_qty)}` : ""}</div>
-									<div class="ccp-row" style="margin-top:4px">${r.is_stock_item ? fpill(r.fulfilment_status) : wpill(r.work_status)}</div>
+									<div class="ccp-row" style="margin-top:4px">${r.is_stock_item ? fpill(r.fulfilment_status) : wpill(r.work_status)}
+									${flt(r.sales_incentive_rate) ? `<span class="ccp-pill ok" title="${__("Paid to the line's salesperson for each unit invoiced")}">${__("Incentive {0} × {1} = {2}", [this.money(r.sales_incentive_rate), flt(r.qty), this.money(flt(r.sales_incentive_rate) * flt(r.qty))])}</span>` : ""}</div>
 								</div>
 								<div class="amt">${this.money(r.amount)}</div>
 								${

@@ -497,6 +497,86 @@ class TestCarCupidFlow(IntegrationTestCase):
 		finally:
 			frappe.set_user("Administrator")
 
+	def test_15_item_sales_incentive_qty_x_rate(self):
+		"""Item.custom_sales_incentive x qty goes to the line's salesperson; rules cover the other items."""
+		from erpnext.accounts.doctype.sales_invoice.sales_invoice import make_sales_return
+
+		frappe.db.set_value("Item", "CC-MATS", "custom_sales_incentive", 150)
+		try:
+			data = {
+				"client_request_id": _key("item-inc"),
+				"customer": utils.CUSTOMER,
+				"items": [
+					{"item_code": "CC-MATS", "qty": 2, "sales_person": utils.SALES_PERSON},
+					{"item_code": "CC-CERAMIC", "qty": 1, "sales_person": utils.SALES_PERSON},
+				],
+			}
+			memo = pos.save_cash_memo(data)
+			mats = next(r for r in memo["items"] if r["item_code"] == "CC-MATS")
+			self.assertEqual((mats["sales_incentive_rate"], mats["estimated_incentive"]), (150, 300))
+			# the rate was captured when the item was added: a later master change doesn't rewrite the line
+			frappe.db.set_value("Item", "CC-MATS", "custom_sales_incentive", 999)
+			data["name"] = memo["name"]
+			data["items"] = [
+				{**line, "name": row["name"]} for line, row in zip(data["items"], memo["items"], strict=True)
+			]
+			memo = pos.save_cash_memo(data)
+			self.assertEqual(
+				next(r for r in memo["items"] if r["item_code"] == "CC-MATS")["sales_incentive_rate"], 150
+			)
+
+			total = pos.preview_bill("Counter Cash Memo", memo["name"])["grand_total"]
+			res = pos.checkout_cash_memo(
+				data, [{"mode_of_payment": "Cash", "amount": total}], _key("item-inc-pay")
+			)
+			self.assertEqual(res["status"], "Submitted", res)
+			inv = {c["company"]: c["sales_invoice"] for c in res["companies"]}
+
+			mats_entry = frappe.get_all(
+				"Service Incentive Ledger",
+				filters={"sales_invoice": inv[self.ccc]},
+				fields=["sales_person", "basis", "rate", "qty", "incentive_amount", "incentive_rule"],
+			)
+			self.assertEqual(len(mats_entry), 1)
+			e = mats_entry[0]
+			self.assertEqual(
+				(e.sales_person, e.basis, e.rate, e.qty, e.incentive_amount),
+				(utils.SALES_PERSON, "Item Incentive per Unit", 150, 2, 300),
+			)
+			self.assertFalse(e.incentive_rule)
+			# an item without its own incentive still follows the rules (2% test rule)
+			ceramic = frappe.get_all(
+				"Service Incentive Ledger",
+				filters={"sales_invoice": inv[self.ccd]},
+				fields=["basis", "incentive_amount"],
+			)
+			self.assertEqual(ceramic[0].basis, "Percentage of Net Sales")
+			self.assertAlmostEqual(ceramic[0].incentive_amount, 240, places=2)
+
+			# credit note for one mat: -150
+			ret = make_sales_return(inv[self.ccc])
+			for it in ret.items:
+				it.qty = -1
+			ret.update_stock = 0
+			ret.insert()
+			ret.submit()
+			rev = frappe.get_all(
+				"Service Incentive Ledger",
+				filters={"sales_invoice": ret.name},
+				fields=["entry_type", "incentive_amount"],
+			)
+			self.assertEqual((rev[0].entry_type, rev[0].incentive_amount), ("Reversal", -150))
+			net = sum(
+				frappe.get_all(
+					"Service Incentive Ledger",
+					filters={"sales_invoice": ("in", [inv[self.ccc], ret.name])},
+					pluck="incentive_amount",
+				)
+			)
+			self.assertEqual(net, 150)
+		finally:
+			frappe.db.set_value("Item", "CC-MATS", "custom_sales_incentive", 0)
+
 	def test_99_counter_close_with_variance_needs_approval(self):
 		s = counter.get_session(self.session)
 		counter.add_movement(self.session, "Cash Out", 100, "Tea and snacks")

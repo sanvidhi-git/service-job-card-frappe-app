@@ -1,5 +1,10 @@
 """Salesperson incentives from submitted invoice lines (blueprint §11).
 
+* Item incentive first: a line whose item carries Item.custom_sales_incentive earns
+  qty x that amount (captured on the job/memo line when the item was added). It replaces the rules
+  for that line, so an item is never paid twice.
+* Otherwise the most specific Service Incentive Rule applies.
+
 * Base = line net amount excluding GST (`base_net_amount`), after discounts.
 * The matching rule and its rate are snapshotted on the ledger row at submission.
 * Credit notes produce negative Reversal rows automatically (their amounts are negative).
@@ -86,6 +91,17 @@ def compute_amount(rule, base: float, qty: float, item_type: str | None) -> floa
 	return 0.0
 
 
+ITEM_BASIS = "Item Incentive per Unit"
+
+
+def _item_rate(si, d) -> float:
+	"""Per-unit rate on the invoice row; a credit note without it uses the original invoice row's."""
+	rate = flt(d.get("cc_incentive_rate"))
+	if not rate and cint(si.is_return) and d.get("sales_invoice_item"):
+		rate = flt(frappe.db.get_value("Sales Invoice Item", d.sales_invoice_item, "cc_incentive_rate"))
+	return rate
+
+
 def on_invoice_submit(si):
 	lines = [d for d in si.items if d.get("cc_sales_person")]
 	if not lines:
@@ -93,6 +109,10 @@ def on_invoice_submit(si):
 	rules = _rules()
 	for d in lines:
 		item_type = d.get("cc_item_type")
+		item_rate = _item_rate(si, d)
+		if item_rate:
+			_post(si, d, item_type, None, ITEM_BASIS, item_rate, flt(flt(d.qty) * item_rate, 2))
+			continue
 		rule = match_rule(
 			rules,
 			company=si.company,
@@ -107,30 +127,34 @@ def on_invoice_submit(si):
 		amount = compute_amount(rule, flt(d.base_net_amount), flt(d.qty), item_type)
 		if not amount:
 			continue
-		frappe.get_doc(
-			{
-				"doctype": "Service Incentive Ledger",
-				"sales_person": d.cc_sales_person,
-				"company": si.company,
-				"posting_date": si.posting_date,
-				"entry_type": "Reversal" if cint(si.is_return) else "Earned",
-				"sales_invoice": si.name,
-				"invoice_item": d.name,
-				"against_invoice": si.return_against if cint(si.is_return) else None,
-				"item_code": d.item_code,
-				"item_group": d.item_group,
-				"item_type": item_type,
-				"qty": d.qty,
-				"eligible_net_sales": d.base_net_amount,
-				"incentive_rule": rule.name,
-				"basis": rule.basis,
-				"rate": rule.rate,
-				"incentive_amount": amount,
-				"remarks": _("Credit note against {0}").format(si.return_against)
-				if cint(si.is_return)
-				else None,
-			}
-		).insert(ignore_permissions=True)
+		_post(si, d, item_type, rule.name, rule.basis, rule.rate, amount)
+
+
+def _post(si, d, item_type, rule_name, basis, rate, amount):
+	if not amount:
+		return
+	frappe.get_doc(
+		{
+			"doctype": "Service Incentive Ledger",
+			"sales_person": d.cc_sales_person,
+			"company": si.company,
+			"posting_date": si.posting_date,
+			"entry_type": "Reversal" if cint(si.is_return) else "Earned",
+			"sales_invoice": si.name,
+			"invoice_item": d.name,
+			"against_invoice": si.return_against if cint(si.is_return) else None,
+			"item_code": d.item_code,
+			"item_group": d.item_group,
+			"item_type": item_type,
+			"qty": d.qty,
+			"eligible_net_sales": d.base_net_amount,
+			"incentive_rule": rule_name,
+			"basis": basis,
+			"rate": rate,
+			"incentive_amount": amount,
+			"remarks": _("Credit note against {0}").format(si.return_against) if cint(si.is_return) else None,
+		}
+	).insert(ignore_permissions=True)
 
 
 def on_invoice_cancel(si):
@@ -176,6 +200,8 @@ def estimate_for_line(row, company: str, posting_date=None) -> float:
 	"""Draft incentive for an unbilled line (shown separately from earned incentive)."""
 	if not row.get("sales_person"):
 		return 0.0
+	if flt(row.get("sales_incentive_rate")):
+		return flt(row.sales_incentive_rate) * (flt(row.qty) - flt(row.get("billed_qty")))
 	item_group = frappe.db.get_value("Item", row.item_code, "item_group")
 	rule = match_rule(
 		_rules(),

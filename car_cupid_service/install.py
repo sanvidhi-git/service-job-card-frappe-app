@@ -110,7 +110,26 @@ def get_custom_fields():
 				**ro,
 			},
 		],
+		"Item": [
+			{
+				"fieldname": "custom_sales_incentive",
+				"fieldtype": "Currency",
+				"label": "Sales Incentive (per unit)",
+				"insert_after": "max_discount",
+				"non_negative": 1,
+				"description": "Car Cupid: amount paid to the line's salesperson for each unit invoiced. "
+				"Leave 0 to use the Service Incentive Rules instead.",
+			},
+		],
 		"Sales Invoice Item": [
+			{
+				"fieldname": "cc_incentive_rate",
+				"fieldtype": "Currency",
+				"label": "Car Cupid Incentive per Unit",
+				"insert_after": "cc_source_row",
+				"read_only": 1,
+				"no_copy": 0,
+			},
 			{
 				"fieldname": "cc_sales_person",
 				"fieldtype": "Link",

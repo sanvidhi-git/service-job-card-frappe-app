@@ -68,6 +68,7 @@ def execute(filters=None):
 					"qty",
 					"billed_qty",
 					"rate",
+					"sales_incentive_rate",
 				],
 			):
 				if filters.sales_person and row.sales_person != filters.sales_person:
@@ -126,6 +127,7 @@ def execute(filters=None):
 			"fieldtype": "Currency",
 			"width": 130,
 		},
+		{"label": _("Basis"), "fieldname": "basis", "fieldtype": "Data", "width": 150},
 		{
 			"label": _("Rule"),
 			"fieldname": "incentive_rule",

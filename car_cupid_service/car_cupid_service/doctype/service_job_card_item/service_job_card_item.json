@@ -1,6 +1,6 @@
 {
  "actions": [],
- "creation": "2026-10-26 01:30:00.000000",
+ "creation": "2026-10-26 08:00:00.000000",
  "doctype": "DocType",
  "editable_grid": 1,
  "engine": "InnoDB",
@@ -28,6 +28,10 @@
   "requested_qty",
   "issued_qty",
   "returned_qty",
+  "sb_l_inc",
+  "sales_incentive_rate",
+  "cb_l_inc",
+  "estimated_incentive",
   "sb_l_bill",
   "billed_qty",
   "sales_invoice",
@@ -200,6 +204,29 @@
   },
   {
    "collapsible": 1,
+   "fieldname": "sb_l_inc",
+   "fieldtype": "Section Break",
+   "label": "Sales Incentive"
+  },
+  {
+   "description": "Copied from the item's Sales Incentive when the line is added",
+   "fieldname": "sales_incentive_rate",
+   "fieldtype": "Currency",
+   "label": "Incentive per Unit",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cb_l_inc",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "estimated_incentive",
+   "fieldtype": "Currency",
+   "label": "Incentive (Qty x Rate)",
+   "read_only": 1
+  },
+  {
+   "collapsible": 1,
    "fieldname": "sb_l_bill",
    "fieldtype": "Section Break",
    "label": "Billing"
@@ -248,7 +275,7 @@
  "index_web_pages_for_search": 0,
  "istable": 1,
  "links": [],
- "modified": "2026-10-26 01:30:00.000000",
+ "modified": "2026-10-26 08:00:00.000000",
  "modified_by": "Administrator",
  "module": "Car Cupid Service",
  "name": "Service Job Card Item",

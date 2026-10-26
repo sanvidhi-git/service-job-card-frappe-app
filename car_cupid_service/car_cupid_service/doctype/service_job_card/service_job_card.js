@@ -14,6 +14,7 @@ const cc_line_events = {
 			uom: d.uom,
 			warehouse: d.warehouse,
 			price_list_rate: d.price_list_rate,
+			sales_incentive_rate: d.sales_incentive_rate,
 			sales_person: row.sales_person || frm.doc.default_sales_person,
 		});
 		if (d.is_stock_item && d.actual_qty != null && d.actual_qty <= 0) {

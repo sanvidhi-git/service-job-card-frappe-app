@@ -112,6 +112,19 @@ def get_stock_qty(item_code: str, warehouse: str | None) -> float:
 	return flt(frappe.db.get_value("Bin", {"item_code": item_code, "warehouse": warehouse}, "actual_qty"))
 
 
+def get_item_incentive(item_code: str) -> float:
+	"""Per-unit sales incentive from Item.custom_sales_incentive; a variant with none uses its template's."""
+	if not frappe.get_meta("Item").has_field("custom_sales_incentive"):
+		return 0.0
+	rate, template = frappe.db.get_value("Item", item_code, ["custom_sales_incentive", "variant_of"]) or (
+		0,
+		None,
+	)
+	if not flt(rate) and template:
+		rate = frappe.db.get_value("Item", template, "custom_sales_incentive")
+	return flt(rate)
+
+
 def get_line_defaults(item_code: str, company: str | None = None, customer: str | None = None) -> dict:
 	item = frappe.db.get_value(
 		"Item",
@@ -148,6 +161,7 @@ def get_line_defaults(item_code: str, company: str | None = None, customer: str 
 		"price_list_rate": rate,
 		"standard_rate": rate,
 		"actual_qty": get_stock_qty(item_code, warehouse) if warehouse else None,
+		"sales_incentive_rate": get_item_incentive(item_code),
 	}
 
 
@@ -317,6 +331,18 @@ def validate_lines(doc, table: str = "items", is_job_card: bool = False):
 
 		row.rate = flt(flt(row.price_list_rate) * (1 - disc / 100.0), row.precision("rate"))
 		row.amount = flt(row.rate * flt(row.qty), row.precision("amount"))
+
+		# ---- item incentive: captured when the item is put on the line, so a later change to the
+		# item master does not rewrite open lines; a changed item code takes the new item's rate
+		if not prev or prev.item_code != row.item_code:
+			row.sales_incentive_rate = get_item_incentive(row.item_code)
+		else:
+			row.sales_incentive_rate = prev.sales_incentive_rate
+		row.estimated_incentive = (
+			flt(row.sales_incentive_rate) * flt(row.qty)
+			if row.sales_person and row.get("work_status") != "Cancelled"
+			else 0
+		)
 
 	if errors:
 		frappe.throw("<br>".join(errors), title=_("Please correct these lines"))
