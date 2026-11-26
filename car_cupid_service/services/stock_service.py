@@ -174,50 +174,71 @@ def _line_billed_and_net(mir) -> tuple[float, float]:
 
 
 def record_issue(
-	mir_name: str, qty: float, received_by: str | None = None, remarks: str | None = None
+    mir_name: str, qty: float, received_by: str | None = None, remarks: str | None = None
 ) -> dict:
-	_check_roles(STORE_ROLES, _("issue material from stores"))
-	frappe.db.get_value("Material Issue Request", mir_name, "name", for_update=True)
-	mir = frappe.get_doc("Material Issue Request", mir_name)
-	qty = flt(qty)
-	if mir.status == "Cancelled":
-		frappe.throw(_("Request {0} is cancelled").format(mir.name))
-	if qty <= 0:
-		frappe.throw(_("Issue quantity must be greater than zero"))
-	if qty > flt(mir.pending_qty) + 1e-9:
-		frappe.throw(
-			_("Only {0} {1} is pending on this request; you tried to issue {2}.").format(
-				mir.pending_qty, mir.uom, qty
-			),
-			title=_("Over-issue Blocked"),
-		)
-	available = flt(
-		frappe.db.get_value(
-			"Bin", {"item_code": mir.item_code, "warehouse": mir.source_warehouse}, "actual_qty"
-		)
-	)
-	if available < qty:
-		frappe.throw(
-			_("Only {0} in stock at {1}. Cannot issue {2}.").format(available, mir.source_warehouse, qty),
-			title=_("Insufficient Stock"),
-		)
-	se = _make_transfer(mir, qty, mir.source_warehouse, mir.target_warehouse, is_issue=True)
-	mir.append(
-		"movements",
-		{
-			"movement_type": "Issue",
-			"qty": qty,
-			"stock_entry": se,
-			"posted_by": frappe.session.user,
-			"posted_on": now_datetime(),
-			"received_by": received_by or mir.technician,
-			"remarks": remarks,
-		},
-	)
-	mir.save(ignore_permissions=True)
-	_refresh_job(mir.job_card)
-	return {"stock_entry": se, "status": mir.status, "pending_qty": mir.pending_qty}
+    _check_roles(STORE_ROLES, _("issue material from stores"))
 
+    frappe.db.get_value("Material Issue Request", mir_name, "name", for_update=True)
+    mir = frappe.get_doc("Material Issue Request", mir_name)
+    qty = flt(qty)
+
+    if mir.status == "Cancelled":
+        frappe.throw(_("Request {0} is cancelled").format(mir.name))
+
+    if qty <= 0:
+        frappe.throw(_("Issue quantity must be greater than zero"))
+
+    if qty > flt(mir.pending_qty) + 1e-9:
+        frappe.throw(
+            _("Only {0} {1} is pending on this request; you tried to issue {2}.").format(
+                mir.pending_qty, mir.uom, qty
+            ),
+            title=_("Over-issue Blocked"),
+        )
+
+    available = flt(
+        frappe.db.get_value(
+            "Bin",
+            {"item_code": mir.item_code, "warehouse": mir.source_warehouse},
+            "actual_qty",
+        )
+    )
+
+    allow_negative_stock = frappe.db.get_single_value(
+        "Stock Settings", "allow_negative_stock"
+    )
+
+    if available < qty and not allow_negative_stock:
+        frappe.throw(
+            _("Only {0} in stock at {1}. Cannot issue {2}.").format(
+                available, mir.source_warehouse, qty
+            ),
+            title=_("Insufficient Stock"),
+        )
+
+    se = _make_transfer(mir, qty, mir.source_warehouse, mir.target_warehouse, is_issue=True)
+
+    mir.append(
+        "movements",
+        {
+            "movement_type": "Issue",
+            "qty": qty,
+            "stock_entry": se,
+            "posted_by": frappe.session.user,
+            "posted_on": now_datetime(),
+            "received_by": received_by or mir.technician,
+            "remarks": remarks,
+        },
+    )
+
+    mir.save(ignore_permissions=True)
+    _refresh_job(mir.job_card)
+
+    return {
+        "stock_entry": se,
+        "status": mir.status,
+        "pending_qty": mir.pending_qty,
+    }
 
 def record_return(mir_name: str, qty: float, remarks: str | None = None) -> dict:
 	_check_roles(STORE_ROLES, _("accept returns into stores"))
