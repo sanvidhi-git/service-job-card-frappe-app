@@ -1,0 +1,42 @@
+[
+  {
+    "url": "https://github.com/frappe/erpnext",
+    "branch": "version-16"
+  },
+  {
+    "url": "https://github.com/frappe/hrms",
+    "branch": "version-16"
+  },
+  {
+    "url": "https://github.com/frappe/crm",
+    "branch": "main"
+  },
+  {
+    "url": "https://github.com/resilient-tech/india-compliance",
+    "branch": "version-16"
+  },
+  {
+    "url": "https://github.com/shridarpatil/frappe_whatsapp",
+    "branch": "master"
+  },
+  {
+    "url": "https://github.com/frappe/raven",
+    "branch": "main"
+  },
+  {
+    "url": "https://github.com/sanvidhi-git/service-job-card-frappe-app",
+    "branch": "main"
+  },
+  {
+    "url": "https://github.com/sanvidhi-git/talley-bridge",
+    "branch": "main"
+  },
+  {
+    "url": "https://github.com/sanvidhi-git/ess_mobile",
+    "branch": "main"
+  },
+  {
+    "url": "https://github.com/sanvidhi-git/tower_site_execution",
+    "branch": "main"
+  }
+]
