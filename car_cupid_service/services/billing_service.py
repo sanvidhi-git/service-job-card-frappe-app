@@ -5,10 +5,10 @@ Sequence (blueprint §8.1):
   2. Row lock on the source + refusal if another batch for it is in progress.
   3. Server-side eligibility (issue / work-completion gates, unbilled qty only).
   4. Build draft Sales Invoices per company; validate payment covers the computed totals
-     *before* anything is submitted.
+	 *before* anything is submitted.
   5. Create an Invoice Batch and commit it (durable audit record).
   6. Submit each company invoice inside its own savepoint and commit it; one company's failure
-     never rolls back another's submitted invoice.
+	 never rolls back another's submitted invoice.
   7. Allocate the received payment to the submitted invoices and post Payment Entries.
   8. Refresh the source document and finalise the batch status.
 Retries only touch failed companies and unposted allocations.
@@ -64,16 +64,27 @@ def eligible_lines(doc) -> tuple[list[dict], list[str]]:
 		elif is_job and cint(row.is_stock_item) and settings.material_issue_policy == "Request Only":
 			# requested but stock is still in the store warehouse; invoice deducts from there
 			warehouse = row.warehouse
-		elif is_job and not cint(row.is_stock_item) and cint(settings.require_work_completion):
-			if row.work_status != "Completed":
-				qty = 0
-				blockers.append(_("{0}: work is not marked Completed").format(label))
+		elif (
+			is_job
+			and not cint(row.is_stock_item)
+			and cint(settings.require_work_completion)
+			and row.work_status != "Completed"
+		):
+			qty = 0
+			blockers.append(
+				_("{0}: work is not marked Completed").format(label)
+			)
 
 		if qty > 0:
-			out.append({"row": row, "qty": qty, "warehouse": warehouse if cint(row.is_stock_item) else None})
+			out.append({
+				"row": row,
+				"qty": qty,
+				"warehouse": warehouse if cint(row.is_stock_item) else None
+			})
 
 	if blockers and not partial:
 		return [], blockers
+
 	return out, blockers
 
 
@@ -458,7 +469,7 @@ def _submit_companies(batch, source, drafts: dict | None = None):
 				comp.grand_total = invoice_total(si)
 				comp.net_total = flt(si.net_total)
 				comp.error = None
-			except Exception as e:
+			except Exception as e: # noqa: BLE001
 				frappe.db.rollback(save_point="cc_company_invoice")
 				comp.status = "Failed"
 				comp.error = _clean_error(e)
@@ -501,7 +512,7 @@ def _clean_error(e: Exception) -> str:
 			last = frappe.message_log[-1]
 			last = json.loads(last) if isinstance(last, str) else last
 			msg = last.get("message") or msg
-		except Exception:
+		except Exception: # noqa: BLE001, S110
 			pass
 		frappe.clear_messages()
 	return frappe.utils.strip_html(msg)[:1000]
@@ -593,5 +604,5 @@ def recover_stuck_batches():
 					)
 				comp.db_update()
 			finalise(name)
-		except Exception:
+		except Exception: # noqa: BLE001
 			frappe.log_error(title=f"Car Cupid: could not recover batch {name}")

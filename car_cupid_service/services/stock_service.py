@@ -277,7 +277,7 @@ def cancel_request(mir_name: str) -> str:
 				if mr.docstatus == 1 and mr.status not in ("Stopped", "Transferred", "Cancelled"):
 					mr.flags.ignore_permissions = True
 					mr.update_status("Stopped")
-			except Exception:
+			except Exception: # noqa: BLE001
 				frappe.log_error(title=f"Car Cupid: could not stop Material Request {mir.material_request}")
 	_refresh_job(mir.job_card)
 	return mir.status

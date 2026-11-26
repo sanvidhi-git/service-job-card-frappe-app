@@ -94,7 +94,7 @@ def validate_mode_accounts(payments: list[dict], companies: list[str]):
 				acc = get_bank_cash_account(p["mode_of_payment"], company)
 				if not (acc and acc.get("account")):
 					missing.append((p["mode_of_payment"], company))
-			except Exception:
+			except Exception: # noqa: BLE001
 				frappe.clear_messages()
 				missing.append((p["mode_of_payment"], company))
 	if missing:
@@ -272,7 +272,7 @@ def allocate_and_post(batch, payments: list[dict] | None, change_due: float | No
 			alloc.payment_entry = post_payment_entry(batch, alloc)
 			alloc.status = "Posted"
 			alloc.error = None
-		except Exception as e:
+		except Exception as e: # noqa: BLE001
 			frappe.db.rollback(save_point="cc_payment")
 			from car_cupid_service.services.billing_service import _clean_error
 
